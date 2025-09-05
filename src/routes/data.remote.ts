@@ -18,7 +18,7 @@ const users = [
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 // Query: Get all posts
-export const getPosts = query(v.undefined(), async () => {
+export const getPosts = query(async () => {
 	await delay(500); // Simulate network delay
 	return posts.map((p) => ({ id: p.id, title: p.title, likes: p.likes }));
 });

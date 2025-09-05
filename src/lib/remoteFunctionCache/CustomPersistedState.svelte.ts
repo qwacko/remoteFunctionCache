@@ -7,7 +7,7 @@ interface StoredData<T> {
 }
 
 export class CustomPersistedState<DataType extends any> {
-	current = $state<DataType>();
+	#current = $state<DataType>();
 	private isUpdating = false;
 	private storageEventHandler?: (e: StorageEvent) => void;
 	private broadcastChannel?: BroadcastChannel;
@@ -29,9 +29,23 @@ export class CustomPersistedState<DataType extends any> {
 			uniquekey: 'CPS-'
 		}
 	) {
-		this.current = this.loadFromStorage();
+		this.#current = this.loadFromStorage();
 		this.registerInstance();
 		this.setupStorageSync();
+	}
+
+	get current(): DataType {
+		return this.#current;
+	}
+
+	set current(value: DataType) {
+		if (value !== this.#current && !this.isUpdating) {
+			this.#current = value;
+			this.saveToStorage(value);
+			this.syncOtherInstances(value);
+		} else {
+			this.#current = value;
+		}
 	}
 
 	private get storage(): Storage | null {
@@ -179,7 +193,7 @@ export class CustomPersistedState<DataType extends any> {
 						const finalValue = this.unwrapData(parsedData as StoredData<DataType>);
 						if (finalValue !== null) {
 							this.isUpdating = true;
-							this.current = finalValue;
+							this.#current = finalValue;
 							this.isUpdating = false;
 						} else {
 							// Data expired, remove it
@@ -243,14 +257,6 @@ export class CustomPersistedState<DataType extends any> {
 	private setupStorageSync(): void {
 		if (typeof window === 'undefined') return;
 
-		// Watch for changes to current and persist them
-		$effect(() => {
-			if (this.current !== undefined && !this.isUpdating) {
-				this.saveToStorage(this.current);
-				this.syncOtherInstances(this.current);
-			}
-		});
-
 		// Set up cross-tab synchronization if enabled
 		if (this.options.syncTabs) {
 			if (this.options.storage === 'local') {
@@ -272,7 +278,7 @@ export class CustomPersistedState<DataType extends any> {
 								const finalValue = this.unwrapData(parsedData as StoredData<DataType>);
 								if (finalValue !== null) {
 									this.isUpdating = true;
-									this.current = finalValue;
+									this.#current = finalValue;
 									this.isUpdating = false;
 									this.syncOtherInstances(finalValue);
 								}
@@ -304,7 +310,7 @@ export class CustomPersistedState<DataType extends any> {
 								const finalValue = this.unwrapData(parsedData as StoredData<DataType>);
 								if (finalValue !== null) {
 									this.isUpdating = true;
-									this.current = finalValue;
+									this.#current = finalValue;
 									this.isUpdating = false;
 									this.syncOtherInstances(finalValue);
 								}
@@ -330,7 +336,7 @@ export class CustomPersistedState<DataType extends any> {
 		}
 
 		// Load value from new key or use initial value
-		this.current = this.loadFromStorage();
+		this.#current = this.loadFromStorage();
 
 		// Register with new key
 		this.registerInstance();
@@ -340,7 +346,7 @@ export class CustomPersistedState<DataType extends any> {
 	}
 
 	reset(): void {
-		this.current = this.initialValue;
+		this.#current = this.initialValue;
 		const compositeKey = this.getCompositeKey();
 
 		if (this.options.storage === 'indexeddb') {

@@ -52,12 +52,6 @@ export function remoteFunctionCache<TArg, TReturn>(
 
 	const refresh = (callFunction: boolean = false) => {
 		const latestArgs = arg();
-		if (latestArgs === undefined) {
-			state.current = undefined;
-			loadingInternal = false;
-			refreshingInternal = false;
-			return;
-		}
 
 		refreshingInternal = true;
 		if (state.current === undefined) {
@@ -71,10 +65,11 @@ export function remoteFunctionCache<TArg, TReturn>(
 				let result;
 				if (callFunction) {
 					// Force refresh the remote function cache first
-					await fn(latestArgs).refresh();
-					result = await fn(latestArgs);
+					const queryPromise = latestArgs === undefined ? fn() : fn(latestArgs);
+					await queryPromise.refresh();
+					result = await queryPromise;
 				} else {
-					result = await fn(latestArgs);
+					result = latestArgs === undefined ? await fn() : await fn(latestArgs);
 				}
 				state.current = result;
 				error = undefined;
@@ -94,9 +89,10 @@ export function remoteFunctionCache<TArg, TReturn>(
 	$effect(() => {
 		arg();
 		untrack(() => {
-			if (prevArgToKey !== argToKey(arg())) {
-				prevArgToKey = argToKey(arg());
-				state.newKey(`${functionKey}-${argToKey(arg())}`, initialValue);
+			const currentKey = argToKey(arg());
+			if (prevArgToKey !== currentKey) {
+				prevArgToKey = currentKey;
+				state.newKey(`${functionKey}-${currentKey}`, initialValue);
 				refresh();
 			}
 		});
