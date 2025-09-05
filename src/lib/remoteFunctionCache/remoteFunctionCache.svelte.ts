@@ -140,6 +140,7 @@ export function remoteFunctionCache<TArg, TReturn>(
 		refresh: () => refresh(true),
 		setValue: (val: TReturn) => {
 			state.current = val;
+			updateTime = new Date();
 		}
 	};
 }
