@@ -48,7 +48,7 @@ export function remoteFunctionCache<TArg, TReturn>(
 	let refreshingInternal = $state(true);
 	let error = $state<any>();
 	let updateTime = $state<Date>(new Date());
-	let prevArgToKey = $state<string | undefined>();
+	let prevArgToKey = $state<string | undefined>(null as any); // Use null to ensure first comparison always triggers
 
 	const refresh = (callFunction: boolean = false) => {
 		const latestArgs = arg();
@@ -85,7 +85,7 @@ export function remoteFunctionCache<TArg, TReturn>(
 		executeFunction();
 	};
 
-	//Handle Args Being Updated
+	//Handle Args Being Updated (including initial load)
 	$effect(() => {
 		arg();
 		untrack(() => {

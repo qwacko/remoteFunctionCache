@@ -1,23 +1,19 @@
 <script>
 	import { remoteFunctionCache } from '../../lib/index.js';
 	import { searchPosts, getUsers } from '../data.remote.js';
-	
+
 	let searchQuery = $state('');
 	let enableSync = $state(true);
 	let storage1Type = $state('local');
 	let storage2Type = $state('indexeddb');
 
 	// Search cache with debouncing
-	const searchCache = remoteFunctionCache(
-		searchPosts, 
-		() => searchQuery.trim() || undefined,
-		{
-			key: 'search-results',
-			storage: 'indexeddb',
-			syncTabs: true,
-			timeoutMinutes: 10
-		}
-	);
+	const searchCache = remoteFunctionCache(searchPosts, () => searchQuery.trim() || undefined, {
+		key: 'search-results',
+		storage: 'indexeddb',
+		syncTabs: true,
+		timeoutMinutes: 10
+	});
 
 	// Dual storage demo - same function, different storage
 	const usersLocalCache = remoteFunctionCache(getUsers, () => undefined, {
@@ -55,9 +51,7 @@
 	};
 
 	const setCustomData = () => {
-		usersLocalCache.setValue([
-			{ id: 999, name: 'Custom User', email: 'custom@example.com' }
-		]);
+		usersLocalCache.setValue([{ id: 999, name: 'Custom User', email: 'custom@example.com' }]);
 	};
 </script>
 
@@ -66,8 +60,8 @@
 <div class="card">
 	<h2>Cross-tab Synchronization</h2>
 	<p>
-		Open this page in multiple browser tabs to see real-time synchronization in action. 
-		Changes made in one tab will automatically appear in other tabs.
+		Open this page in multiple browser tabs to see real-time synchronization in action. Changes made
+		in one tab will automatically appear in other tabs.
 	</p>
 	<div class="form-group">
 		<label>
@@ -82,13 +76,9 @@
 	<p class="text-sm text-gray-600 mb-4">
 		Type to search posts. Results are cached and the cache key changes with your query.
 	</p>
-	
+
 	<div class="form-group">
-		<input 
-			bind:value={searchQuery}
-			placeholder="Search posts..."
-			class="text-lg"
-		/>
+		<input bind:value={searchQuery} placeholder="Search posts..." class="text-lg" />
 	</div>
 
 	<div class="flex items-center gap-4 mb-4">
@@ -100,6 +90,9 @@
 		</span>
 	</div>
 
+	Loading: {searchCache.loading ? 'Yes' : 'No'} <br />
+	Error: {searchCache.error ? searchCache.error.message : 'None'} <br />
+	Refreshing: {searchCache.refreshing ? 'Yes' : 'No'} <br />
 	{#if searchQuery.trim() && !searchCache.loading}
 		{#if searchCache.error}
 			<div class="status status-error">
@@ -120,9 +113,7 @@
 		{/if}
 	{/if}
 
-	<button class="btn mt-4" onclick={clearSearchCache}>
-		Clear Search Cache
-	</button>
+	<button class="btn mt-4" onclick={clearSearchCache}> Clear Search Cache </button>
 </div>
 
 <div class="card">
@@ -151,9 +142,11 @@
 
 			{#if usersLocalCache.value?.current}
 				<div class="text-sm">
-					<strong>Users:</strong> {usersLocalCache.value.current.length}
-					<br>
-					<strong>Updated:</strong> {usersLocalCache.updateTime.toLocaleTimeString()}
+					<strong>Users:</strong>
+					{usersLocalCache.value.current.length}
+					<br />
+					<strong>Updated:</strong>
+					{usersLocalCache.updateTime.toLocaleTimeString()}
 				</div>
 			{/if}
 		</div>
@@ -177,9 +170,11 @@
 
 			{#if usersIndexedDBCache.value?.current}
 				<div class="text-sm">
-					<strong>Users:</strong> {usersIndexedDBCache.value.current.length}
-					<br>
-					<strong>Updated:</strong> {usersIndexedDBCache.updateTime.toLocaleTimeString()}
+					<strong>Users:</strong>
+					{usersIndexedDBCache.value.current.length}
+					<br />
+					<strong>Updated:</strong>
+					{usersIndexedDBCache.updateTime.toLocaleTimeString()}
 				</div>
 			{/if}
 		</div>
@@ -189,7 +184,8 @@
 <div class="card">
 	<h3>Multiple Cache Instances</h3>
 	<p class="text-sm text-gray-600 mb-4">
-		Multiple cache instances of the same function with different keys. Changes to one affect the others through cross-tab sync.
+		Multiple cache instances of the same function with different keys. Changes to one affect the
+		others through cross-tab sync.
 	</p>
 
 	<div class="grid grid-cols-2">
@@ -199,9 +195,7 @@
 				<span class="status" class:status-loading={usersCacheInstance1.loading}>
 					Instance 1: {usersCacheInstance1.loading ? 'Loading' : 'Loaded'}
 				</span>
-				<button class="btn" onclick={() => usersCacheInstance1.refresh()}>
-					Refresh
-				</button>
+				<button class="btn" onclick={() => usersCacheInstance1.refresh()}> Refresh </button>
 			</div>
 
 			{#if usersCacheInstance1.value?.current}
@@ -222,9 +216,7 @@
 				<span class="status" class:status-loading={usersCacheInstance2.loading}>
 					Instance 2: {usersCacheInstance2.loading ? 'Loading' : 'Loaded'}
 				</span>
-				<button class="btn" onclick={() => usersCacheInstance2.refresh()}>
-					Refresh
-				</button>
+				<button class="btn" onclick={() => usersCacheInstance2.refresh()}> Refresh </button>
 			</div>
 
 			{#if usersCacheInstance2.value?.current}
@@ -248,9 +240,7 @@
 	</p>
 
 	<div class="flex gap-2">
-		<button class="btn" onclick={setCustomData}>
-			Set Custom User Data
-		</button>
+		<button class="btn" onclick={setCustomData}> Set Custom User Data </button>
 		<button class="btn btn-secondary" onclick={() => usersLocalCache.refresh()}>
 			Reset to Server Data
 		</button>
