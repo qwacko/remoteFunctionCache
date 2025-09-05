@@ -1,4 +1,5 @@
 <script>
+	import { json } from '@sveltejs/kit';
 	import { remoteFunctionCache } from '../../lib/index.js';
 	import { searchPosts, getUsers } from '../data.remote.js';
 
@@ -92,6 +93,9 @@
 
 	Loading: {searchCache.loading ? 'Yes' : 'No'} <br />
 	Error: {searchCache.error ? searchCache.error.message : 'None'} <br />
+	{#if searchCache.error}
+		<pre>{JSON.stringify(searchCache.error, null, 2)}</pre>
+	{/if}
 	Refreshing: {searchCache.refreshing ? 'Yes' : 'No'} <br />
 	{#if searchQuery.trim() && !searchCache.loading}
 		{#if searchCache.error}

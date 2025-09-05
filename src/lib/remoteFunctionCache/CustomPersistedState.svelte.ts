@@ -12,6 +12,7 @@ export class CustomPersistedState<DataType extends any> {
 	private storageEventHandler?: (e: StorageEvent) => void;
 	private broadcastChannel?: BroadcastChannel;
 	private idbPromise?: Promise<IDBDatabase>;
+	private isLoadingFromIndexedDB = false;
 
 	constructor(
 		private key: string,
@@ -46,6 +47,10 @@ export class CustomPersistedState<DataType extends any> {
 		} else {
 			this.#current = value;
 		}
+	}
+
+	get isLoading(): boolean {
+		return this.isLoadingFromIndexedDB;
 	}
 
 	private get storage(): Storage | null {
@@ -135,6 +140,7 @@ export class CustomPersistedState<DataType extends any> {
 	private loadFromStorage(): DataType {
 		if (this.options.storage === 'indexeddb') {
 			// For IndexedDB, we'll load asynchronously and update current later
+			this.isLoadingFromIndexedDB = true;
 			this.loadFromIndexedDB();
 			return this.initialValue;
 		}
@@ -179,6 +185,7 @@ export class CustomPersistedState<DataType extends any> {
 
 			const request = store.get(compositeKey);
 			request.onsuccess = () => {
+				this.isLoadingFromIndexedDB = false;
 				if (request.result !== undefined) {
 					const deserialize = this.options.deserialize ?? JSON.parse;
 					const parsedData = deserialize(request.result);
@@ -202,6 +209,9 @@ export class CustomPersistedState<DataType extends any> {
 					}
 					// If data is not in expected format, ignore it (treat as invalid)
 				}
+			};
+			request.onerror = () => {
+				this.isLoadingFromIndexedDB = false;
 			};
 		} catch (error) {
 			console.warn(`Failed to load from IndexedDB for key "${this.getCompositeKey()}":`, error);

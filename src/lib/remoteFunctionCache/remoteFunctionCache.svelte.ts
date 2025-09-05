@@ -54,14 +54,38 @@ export function remoteFunctionCache<TArg, TReturn>(
 		const latestArgs = arg();
 
 		refreshingInternal = true;
-		if (state.current === undefined) {
-			loadingInternal = true;
-		} else {
-			loadingInternal = false;
-		}
+		// Only show loading initially if we don't have current data
+		// The executeFunction will handle IndexedDB loading and network requests appropriately
+		loadingInternal = state.current === undefined;
 
 		const executeFunction = async () => {
 			try {
+				// If using IndexedDB, wait for the async load to complete
+				if (state.isLoading) {
+					await new Promise(resolve => {
+						const checkLoading = () => {
+							if (!state.isLoading) {
+								resolve(undefined);
+							} else {
+								setTimeout(checkLoading, 10);
+							}
+						};
+						checkLoading();
+					});
+				}
+
+				// If we now have data from cache, don't make a network request unless forced
+				if (state.current !== undefined && !callFunction) {
+					refreshingInternal = false;
+					loadingInternal = false;
+					return;
+				}
+
+				// Only set loading to true if we actually need to make a network request
+				if (state.current === undefined) {
+					loadingInternal = true;
+				}
+
 				let result;
 				if (callFunction) {
 					// Force refresh the remote function cache first
