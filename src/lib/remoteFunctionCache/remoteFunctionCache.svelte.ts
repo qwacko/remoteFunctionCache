@@ -43,7 +43,6 @@ export function remoteFunctionCache<TArg, TReturn>(
 		}
 	);
 
-	$inspect('Current State', state);
 
 	let loadingInternal = $state(true);
 	let refreshingInternal = $state(true);
@@ -55,23 +54,10 @@ export function remoteFunctionCache<TArg, TReturn>(
 		const latestArgs = arg();
 		if (latestArgs === undefined) {
 			state.current = undefined;
+			loadingInternal = false;
+			refreshingInternal = false;
 			return;
 		}
-		const callFunctionFunc = () => {
-			fn(latestArgs)
-				.then((result) => {
-					state.current = result;
-					error = undefined;
-				})
-				.catch((err) => {
-					error = err;
-				})
-				.finally(() => {
-					updateTime = new Date();
-					refreshingInternal = false;
-					loadingInternal = false;
-				});
-		};
 
 		refreshingInternal = true;
 		if (state.current === undefined) {
@@ -79,15 +65,29 @@ export function remoteFunctionCache<TArg, TReturn>(
 		} else {
 			loadingInternal = false;
 		}
-		if (callFunction) {
-			fn(latestArgs)
-				.refresh()
-				.then(() => {
-					callFunctionFunc();
-				});
-		} else {
-			callFunctionFunc();
-		}
+
+		const executeFunction = async () => {
+			try {
+				let result;
+				if (callFunction) {
+					// Force refresh the remote function cache first
+					await fn(latestArgs).refresh();
+					result = await fn(latestArgs);
+				} else {
+					result = await fn(latestArgs);
+				}
+				state.current = result;
+				error = undefined;
+			} catch (err) {
+				error = err;
+			} finally {
+				updateTime = new Date();
+				refreshingInternal = false;
+				loadingInternal = false;
+			}
+		};
+
+		executeFunction();
 	};
 
 	//Handle Args Being Updated
