@@ -52,6 +52,8 @@ export function remoteFunctionCache<TArg, TReturn>(
 		const latestArgs = arg();
 
 		refreshingInternal = true;
+		// Clear any previous error at the start of a new request
+		error = undefined;
 		// Only show loading initially if we don't have current data
 		loadingInternal = state.current === undefined;
 
