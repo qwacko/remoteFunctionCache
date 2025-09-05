@@ -1,11 +1,9 @@
-// src/lib/remoteCache.svelte.ts
 import type { RemoteQueryFunction } from '@sveltejs/kit';
 import * as devalue from 'devalue';
 import { untrack } from 'svelte';
 
-import { CustomPersistedState } from './CustomPersistedState.svelte';
-
-const globalCache = new WeakMap<Function, Map<string, any>>();
+import { CustomPersistedState } from './CustomPersistedState.svelte.js';
+import { createStorageProvider, type StorageType } from './storage/StorageFactory.js';
 
 const argToKey = (arg: any) => JSON.stringify(arg);
 
@@ -15,57 +13,56 @@ export function remoteFunctionCache<TArg, TReturn>(
 	{
 		initialValue,
 		key,
-		storage = 'indexeddb',
+		storage = 'local',
 		syncTabs = true,
-		timeoutMinutes // Default to 60 minutes
+		timeoutMinutes
 	}: {
 		initialValue?: TReturn | undefined;
 		key?: string;
-		storage?: 'local' | 'session' | 'indexeddb';
+		storage?: StorageType;
 		syncTabs?: boolean;
 		timeoutMinutes?: number | null;
 	} = {}
 ) {
 	const functionKey = key || fn.name || 'anonymous';
 
-	// Force localStorage when syncTabs is enabled and storage is sessionStorage (since sessionStorage doesn't support cross-tab sync)
-	const effectiveStorage = syncTabs && storage === 'session' ? 'local' : storage;
+	// Force localStorage when syncTabs is enabled and storage is sessionStorage
+	const effectiveStorage: StorageType = syncTabs && storage === 'session' ? 'local' : storage;
+
+	// Create the storage provider with proper serialization
+	const storageProvider = createStorageProvider<TReturn | undefined>(effectiveStorage, {
+		timeoutMinutes,
+		serialize: (val) => devalue.stringify(val),
+		deserialize: (val) => devalue.parse(val) as TReturn
+	});
 
 	let state = new CustomPersistedState<TReturn | undefined>(
 		`${functionKey}-${argToKey(arg())}`,
 		initialValue,
-		{
-			deserialize: (val) => devalue.parse(val) as TReturn,
-			serialize: (val) => devalue.stringify(val),
-			storage: effectiveStorage,
-			syncTabs,
-			timeoutMinutes
-		}
+		storageProvider
 	);
-
 
 	let loadingInternal = $state(true);
 	let refreshingInternal = $state(true);
 	let error = $state<any>();
 	let updateTime = $state<Date>(new Date());
-	let prevArgToKey = $state<string | undefined>(null as any); // Use null to ensure first comparison always triggers
+	let prevArgToKey = $state<string | undefined>(null as any);
 
 	const refresh = (callFunction: boolean = false) => {
 		const latestArgs = arg();
 
 		refreshingInternal = true;
 		// Only show loading initially if we don't have current data
-		// The executeFunction will handle IndexedDB loading and network requests appropriately
 		loadingInternal = state.current === undefined;
 
 		const executeFunction = async () => {
 			try {
-				// If using IndexedDB, wait for the async load to complete
+				// If using async storage (IndexedDB), wait for loading to complete
 				if (state.isLoading) {
-					await new Promise(resolve => {
+					await new Promise<void>(resolve => {
 						const checkLoading = () => {
 							if (!state.isLoading) {
-								resolve(undefined);
+								resolve();
 							} else {
 								setTimeout(checkLoading, 10);
 							}
@@ -109,7 +106,7 @@ export function remoteFunctionCache<TArg, TReturn>(
 		executeFunction();
 	};
 
-	//Handle Args Being Updated (including initial load)
+	// Handle Args Being Updated (including initial load)
 	$effect(() => {
 		arg();
 		untrack(() => {
