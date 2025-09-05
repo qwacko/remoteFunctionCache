@@ -55,16 +55,24 @@ export const getUsers = query(async () => {
 	return users;
 });
 
-// Command: Add like to post
-export const addLike = command(v.number(), async (postId) => {
+// Form: Add like to post (triggers SvelteKit auto-invalidation)
+export const addLike = form(async (data) => {
 	await delay(200);
-	if (typeof postId !== 'number') {
+	const postIdString = data.get('postId');
+	
+	if (!postIdString || typeof postIdString !== 'string') {
 		throw new Error('Invalid post ID');
 	}
+	
+	const postId = parseInt(postIdString, 10);
+	if (isNaN(postId)) {
+		throw new Error('Invalid post ID format');
+	}
+	
 	const post = posts.find((p) => p.id === postId);
 	if (post) {
 		post.likes++;
-		return post.likes;
+		return { success: true, likes: post.likes, postId };
 	}
 	throw new Error('Post not found');
 });

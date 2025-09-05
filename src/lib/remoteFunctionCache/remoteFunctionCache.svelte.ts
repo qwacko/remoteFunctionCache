@@ -15,13 +15,15 @@ export function remoteFunctionCache<TArg, TReturn>(
 		key,
 		storage = 'local',
 		syncTabs = true,
-		timeoutMinutes
+		timeoutMinutes,
+		autoSync = true
 	}: {
 		initialValue?: TReturn | undefined;
 		key?: string;
 		storage?: StorageType;
 		syncTabs?: boolean;
 		timeoutMinutes?: number | null;
+		autoSync?: boolean;
 	} = {}
 ) {
 	const functionKey = key || fn.name || 'anonymous';
@@ -47,6 +49,15 @@ export function remoteFunctionCache<TArg, TReturn>(
 	let error = $state<any>();
 	let updateTime = $state<Date>(new Date());
 	let prevArgToKey = $state<string | undefined>(null as any);
+
+	// Create a reactive remote function query to monitor for SvelteKit auto-invalidation
+	let remoteQuery = $derived(() => {
+		const currentArgs = arg();
+		return currentArgs === undefined ? fn() : fn(currentArgs);
+	});
+
+	// Track the remote function's result to detect when SvelteKit refreshes it
+	let lastRemoteResult = $state<TReturn | undefined>(undefined);
 
 	const refresh = (callFunction: boolean = false) => {
 		const latestArgs = arg();
@@ -121,6 +132,39 @@ export function remoteFunctionCache<TArg, TReturn>(
 		});
 	});
 
+	// Monitor the remote function for SvelteKit auto-invalidation
+	$effect(() => {
+		if (!autoSync) return;
+		
+		const query = remoteQuery;
+		if (query) {
+			// Use untrack to avoid infinite loops while still monitoring the promise
+			untrack(async () => {
+				try {
+					const result = await query;
+					
+					// Only update if the result has actually changed
+					if (JSON.stringify(result) !== JSON.stringify(lastRemoteResult)) {
+						lastRemoteResult = result;
+						
+						// Update our cache with the fresh data from SvelteKit
+						state.current = result;
+						updateTime = new Date();
+						error = undefined;
+						
+						// Clear loading states since we got fresh data
+						loadingInternal = false;
+						refreshingInternal = false;
+					}
+				} catch (err) {
+					// Don't override cache on remote function errors
+					// The cache might still have valid data
+					console.debug('Remote function auto-sync error (cache preserved):', err);
+				}
+			});
+		}
+	});
+
 	return {
 		get loading() {
 			return loadingInternal;
@@ -136,6 +180,9 @@ export function remoteFunctionCache<TArg, TReturn>(
 		},
 		get updateTime() {
 			return updateTime;
+		},
+		get autoSync() {
+			return autoSync;
 		},
 		refresh: () => refresh(true),
 		setValue: (val: TReturn) => {

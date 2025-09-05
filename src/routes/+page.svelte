@@ -7,18 +7,20 @@
 	let timeoutMinutes = $state(5);
 	let storageType = $state('local');
 
-	// Basic cached posts query
+	// Basic cached posts query with auto-sync enabled
 	const postsCache = remoteFunctionCache(getPosts, () => undefined, {
 		key: 'posts-list',
 		storage: 'local',
-		timeoutMinutes: 10
+		timeoutMinutes: 10,
+		autoSync: true // ✨ Enable SvelteKit auto-invalidation sync
 	});
 
-	// Cached single post query with arguments
+	// Cached single post query with arguments and auto-sync
 	const postCache = remoteFunctionCache(getPost, () => selectedPostId, {
 		key: 'single-post',
 		storage: 'local',
-		timeoutMinutes: 10
+		timeoutMinutes: 10,
+		autoSync: true // ✨ Enable SvelteKit auto-invalidation sync
 	});
 
 	// Time cache for demonstrating expiry
@@ -33,18 +35,6 @@
 		timeoutMinutes: null // No expiry
 	});
 
-	const handleLike = async (postId: number) => {
-		try {
-			await addLike(postId);
-			// Refresh the caches to show updated like count
-			postsCache.refresh();
-			if (postId === selectedPostId) {
-				postCache.refresh();
-			}
-		} catch (error) {
-			console.error('Failed to like post:', error);
-		}
-	};
 </script>
 
 <h1>Remote Function Cache - Basic Usage</h1>
@@ -60,7 +50,21 @@
 		<li>Supports cache expiration</li>
 		<li>Enables cross-tab synchronization</li>
 		<li>Handles reactive argument changes</li>
+		<li>
+			🆕 <strong>Auto-syncs with SvelteKit mutations</strong> - when you update data via remote functions,
+			all caches automatically refresh!
+		</li>
 	</ul>
+
+	<div class="card mt-4" style="background-color: #f0f9ff; border-left: 4px solid #0ea5e9;">
+		<h4>🎉 Auto-Sync Demo</h4>
+		<p class="text-sm">
+			Try clicking the "Like" buttons below. Notice how <strong>both</strong> the posts list and
+			single post automatically update without any manual refresh calls - that's SvelteKit's form
+			auto-invalidation working with our cache system! The `addLike` function is a <code>form</code>
+			action, which triggers automatic invalidation of all <code>query</code> functions.
+		</p>
+	</div>
 </div>
 
 <div class="grid grid-cols-2">
@@ -93,9 +97,15 @@
 			<span class="status" class:status-refreshing={postsCache.refreshing && !postsCache.loading}>
 				{postsCache.refreshing && !postsCache.loading ? 'Refreshing' : 'Idle'}
 			</span>
+			{#if postsCache.autoSync}
+				<span class="status" style="background-color: #10b981; color: white;"> Auto-Sync ✓ </span>
+			{/if}
 		</div>
 		<div class="text-sm text-gray-600">
-			Last updated: {postsCache.updateTime.toLocaleTimeString()}
+			<strong>Last updated:</strong>
+			{postsCache.updateTime.toLocaleTimeString()}<br />
+			<strong>Auto-sync:</strong>
+			{postsCache.autoSync ? 'Enabled - automatically syncs with SvelteKit mutations' : 'Disabled'}
 		</div>
 		<button class="btn mt-4" onclick={() => postsCache.refresh()}> Force Refresh Posts </button>
 	</div>
@@ -118,7 +128,10 @@
 						<span class="text-sm text-gray-600">❤️ {post.likes} likes</span>
 						<div class="flex gap-2">
 							<button class="btn" onclick={() => (selectedPostId = post.id)}> Select </button>
-							<button class="btn btn-secondary" onclick={() => handleLike(post.id)}> Like </button>
+							<form {...addLike} style="display: inline;">
+								<input type="hidden" name="postId" value={post.id} />
+								<button class="btn btn-secondary" type="submit"> Like </button>
+							</form>
 						</div>
 					</div>
 				</div>
@@ -152,12 +165,10 @@
 				<span class="text-sm text-gray-600">❤️ {postCache.value.current.likes} likes</span>
 				<div class="flex gap-2">
 					<button class="btn" onclick={() => postCache.refresh()}> Refresh </button>
-					<button
-						class="btn btn-secondary"
-						onclick={() => postCache.value.current && handleLike(postCache.value.current.id)}
-					>
-						Like
-					</button>
+					<form {...addLike} style="display: inline;">
+						<input type="hidden" name="postId" value={postCache.value.current.id} />
+						<button class="btn btn-secondary" type="submit"> Like </button>
+					</form>
 				</div>
 			</div>
 		</div>
