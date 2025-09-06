@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { remoteFunctionCache } from '../../lib/index.js';
-	import { getUsers, getCurrentTime } from '../data.remote.js';
+	import { getUsers } from '../data.remote.js';
 	import { onMount } from 'svelte';
 
 	let performanceData = $state<
@@ -30,10 +30,10 @@
 		timeoutMinutes: null
 	});
 
-	// Cache for large data test
-	const largeDataCache = remoteFunctionCache(getCurrentTime, () => undefined, {
-		key: 'large-data-test',
-		storage: 'indexeddb',
+	const memoryCache = remoteFunctionCache(getUsers, () => undefined, {
+		key: 'storage-test-memory',
+		storage: 'memory',
+		syncTabs: false,
 		timeoutMinutes: null
 	});
 
@@ -51,7 +51,8 @@
 		const tests = [
 			{ name: 'localStorage', cache: localStorageCache, storage: 'local' },
 			{ name: 'sessionStorage', cache: sessionStorageCache, storage: 'session' },
-			{ name: 'IndexedDB', cache: indexedDBCache, storage: 'indexeddb' }
+			{ name: 'IndexedDB', cache: indexedDBCache, storage: 'indexeddb' },
+			{ name: 'Memory', cache: memoryCache, storage: 'memory' }
 		];
 
 		for (const test of tests) {
@@ -64,7 +65,9 @@
 			// Read test (measure cache access time)
 			const readStart = performance.now();
 			// Simply access the existing cache data instead of creating a new cache
+			// Read cached data for performance measurement
 			const cachedData = test.cache.value?.current;
+			console.log('Cache read for', test.name, ':', !!cachedData);
 			await new Promise((resolve) => setTimeout(resolve, 10)); // Minimal delay to simulate cache access
 			const readEnd = performance.now();
 
@@ -84,6 +87,7 @@
 		localStorageCache.setValue([]);
 		sessionStorageCache.setValue([]);
 		indexedDBCache.setValue([]);
+		memoryCache.setValue([]);
 	};
 
 	const populateAllCaches = () => {
@@ -96,6 +100,7 @@
 		localStorageCache.setValue(sampleData);
 		sessionStorageCache.setValue(sampleData);
 		indexedDBCache.setValue(sampleData);
+		memoryCache.setValue(sampleData);
 	};
 
 	onMount(() => {
@@ -108,7 +113,7 @@
 
 <div class="card">
 	<h2>Storage Type Differences</h2>
-	<div class="grid grid-cols-3">
+	<div class="grid grid-cols-2 md:grid-cols-4">
 		<div class="card">
 			<h3>localStorage</h3>
 			<ul class="text-sm">
@@ -139,6 +144,16 @@
 				<li>✅ Rich data types</li>
 			</ul>
 		</div>
+		<div class="card">
+			<h3>Memory</h3>
+			<ul class="text-sm">
+				<li>⚠️ Lost on page reload</li>
+				<li>❌ No cross-tab sync</li>
+				<li>✅ No storage limit (RAM-based)</li>
+				<li>✅ Fastest access (synchronous)</li>
+				<li>✅ Rich data types (native JS)</li>
+			</ul>
+		</div>
 	</div>
 </div>
 
@@ -153,7 +168,7 @@
 		<button class="btn btn-secondary" onclick={clearAllCaches}> Clear All Caches </button>
 	</div>
 
-	<div class="grid grid-cols-3">
+	<div class="grid grid-cols-2 md:grid-cols-4">
 		<div class="card">
 			<h4>localStorage Cache</h4>
 			<div class="mb-4">
@@ -172,7 +187,7 @@
 				</div>
 
 				<ul class="text-xs">
-					{#each localStorageCache.value.current.slice(0, 3) as user}
+					{#each localStorageCache.value.current.slice(0, 3) as user (user.id)}
 						<li>{user.name}</li>
 					{/each}
 					{#if localStorageCache.value.current.length > 3}
@@ -206,7 +221,7 @@
 				</div>
 
 				<ul class="text-xs">
-					{#each sessionStorageCache.value.current.slice(0, 3) as user}
+					{#each sessionStorageCache.value.current.slice(0, 3) as user (user.id)}
 						<li>{user.name}</li>
 					{/each}
 					{#if sessionStorageCache.value.current.length > 3}
@@ -242,7 +257,7 @@
 				</div>
 
 				<ul class="text-xs">
-					{#each indexedDBCache.value.current.slice(0, 3) as user}
+					{#each indexedDBCache.value.current.slice(0, 3) as user (user.id)}
 						<li>{user.name}</li>
 					{/each}
 					{#if indexedDBCache.value.current.length > 3}
@@ -256,6 +271,38 @@
 			<button class="btn mt-4" onclick={() => indexedDBCache.refresh()}>
 				Refresh from Server
 			</button>
+		</div>
+
+		<div class="card">
+			<h4>Memory Cache</h4>
+			<div class="mb-4">
+				<span class="status" class:status-loading={memoryCache.loading}>
+					{memoryCache.loading ? 'Loading' : 'Loaded'}
+				</span>
+			</div>
+
+			{#if memoryCache.value?.current}
+				<div class="text-sm mb-4">
+					<strong>Records:</strong>
+					{memoryCache.value.current.length}
+					<br />
+					<strong>Updated:</strong>
+					{memoryCache.updateTime.toLocaleTimeString()}
+				</div>
+
+				<ul class="text-xs">
+					{#each memoryCache.value.current.slice(0, 3) as user (user.id)}
+						<li>{user.name}</li>
+					{/each}
+					{#if memoryCache.value.current.length > 3}
+						<li class="text-gray-500">...and {memoryCache.value.current.length - 3} more</li>
+					{/if}
+				</ul>
+			{:else}
+				<p class="text-gray-500 text-sm">No data</p>
+			{/if}
+
+			<button class="btn mt-4" onclick={() => memoryCache.refresh()}> Refresh from Server </button>
 		</div>
 	</div>
 </div>
@@ -283,7 +330,7 @@
 					</tr>
 				</thead>
 				<tbody>
-					{#each performanceData as result}
+					{#each performanceData as result (result.storage)}
 						<tr style="border-bottom: 1px solid #f1f5f9;">
 							<td style="padding: 0.5rem; font-weight: 500;">{result.storage}</td>
 							<td style="padding: 0.5rem;">{result.writeTime}</td>
@@ -306,5 +353,8 @@
 		<li><strong>localStorage:</strong> Application → Storage → Local Storage</li>
 		<li><strong>sessionStorage:</strong> Application → Storage → Session Storage</li>
 		<li><strong>IndexedDB:</strong> Application → Storage → IndexedDB → CustomPersistedState</li>
+		<li>
+			<strong>Memory:</strong> Data exists only in JavaScript memory (not visible in DevTools storage)
+		</li>
 	</ul>
 </div>

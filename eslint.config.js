@@ -11,6 +11,9 @@ const gitignorePath = fileURLToPath(new URL('./.gitignore', import.meta.url));
 
 export default ts.config(
 	includeIgnoreFile(gitignorePath),
+	{
+		ignores: ['.github/workflows/**']
+	},
 	js.configs.recommended,
 	...ts.configs.recommended,
 	...svelte.configs.recommended,
@@ -35,6 +38,15 @@ export default ts.config(
 				parser: ts.parser,
 				svelteConfig
 			}
+		}
+	},
+	// Relaxed rules for test files
+	{
+		files: ['**/*.test.{js,ts}', '**/*.spec.{js,ts}'],
+		rules: {
+			'@typescript-eslint/no-explicit-any': 'off',
+			'@typescript-eslint/no-unused-vars': 'off',
+			'prefer-const': 'off'
 		}
 	}
 );

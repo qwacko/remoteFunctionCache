@@ -1,3 +1,4 @@
+import { SvelteMap, SvelteSet } from 'svelte/reactivity';
 import type { StorageProvider } from './storage/StorageProvider.js';
 
 // Efficient equality check that handles complex objects and circular references
@@ -6,7 +7,7 @@ function isEqual<T>(a: T, b: T): boolean {
 	if (a === b) return true;
 	if (a == null || b == null) return a === b;
 	if (typeof a !== 'object' || typeof b !== 'object') return false;
-	
+
 	// For objects, use JSON comparison as fallback (could be optimized further)
 	try {
 		return JSON.stringify(a) === JSON.stringify(b);
@@ -17,9 +18,9 @@ function isEqual<T>(a: T, b: T): boolean {
 }
 
 // Global registry to track instances by key for same-tab synchronization
-const instanceRegistry = new Map<string, Set<CustomPersistedState<any>>>();
+const instanceRegistry = new SvelteMap<string, SvelteSet<CustomPersistedState<unknown>>>();
 
-export class CustomPersistedState<DataType extends any> {
+export class CustomPersistedState<DataType> {
 	#current = $state<DataType | undefined>();
 	private isUpdating = false;
 	private storageCleanup?: () => void;
@@ -50,7 +51,7 @@ export class CustomPersistedState<DataType extends any> {
 	set current(value: DataType | undefined) {
 		// Efficient equality check with fast path for primitives
 		const hasChanged = !this.isUpdating && !isEqual(value, this.#current);
-		
+
 		if (hasChanged) {
 			this.#current = value;
 			if (value !== undefined) {
@@ -73,9 +74,9 @@ export class CustomPersistedState<DataType extends any> {
 	private registerInstance(): void {
 		const compositeKey = this.getCompositeKey();
 		if (!instanceRegistry.has(compositeKey)) {
-			instanceRegistry.set(compositeKey, new Set());
+			instanceRegistry.set(compositeKey, new SvelteSet<CustomPersistedState<DataType>>());
 		}
-		instanceRegistry.get(compositeKey)!.add(this);
+		(instanceRegistry.get(compositeKey)! as SvelteSet<CustomPersistedState<DataType>>).add(this);
 	}
 
 	private unregisterInstance(): void {
@@ -106,7 +107,7 @@ export class CustomPersistedState<DataType extends any> {
 	private async loadFromStorage(): Promise<void> {
 		const compositeKey = this.getCompositeKey();
 		const value = await this.storageProvider.get(compositeKey);
-		
+
 		if (value !== null) {
 			this.isUpdating = true;
 			this.#current = value;
@@ -121,7 +122,7 @@ export class CustomPersistedState<DataType extends any> {
 
 	private setupSync(): void {
 		const compositeKey = this.getCompositeKey();
-		
+
 		// Set up cross-tab synchronization if supported by the provider
 		if (this.storageProvider.setupSync) {
 			const cleanup = this.storageProvider.setupSync(compositeKey, (value) => {
@@ -141,7 +142,7 @@ export class CustomPersistedState<DataType extends any> {
 	newKey(key: string, newInitialValue?: DataType, retainValue: boolean = false): void {
 		// Store current value if we want to retain it
 		const valueToRetain = retainValue ? this.#current : undefined;
-		
+
 		// Clean up current setup
 		this.unregisterInstance();
 		if (this.storageCleanup) {
@@ -161,7 +162,7 @@ export class CustomPersistedState<DataType extends any> {
 		} else {
 			this.#current = this.initialValue;
 		}
-		
+
 		this.registerInstance();
 		this.setupSync();
 		this.loadFromStorage();

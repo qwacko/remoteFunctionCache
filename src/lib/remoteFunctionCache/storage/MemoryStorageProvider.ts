@@ -1,6 +1,9 @@
 import type { StorageProvider, StoredData, StorageOptions } from './StorageProvider.js';
 
-export class SessionStorageProvider<T> implements StorageProvider<T> {
+// In-memory storage for testing and scenarios where persistence isn't needed
+const memoryStorage = new Map<string, string>();
+
+export class MemoryStorageProvider<T> implements StorageProvider<T> {
 	private options: StorageOptions;
 
 	constructor(options: StorageOptions = {}) {
@@ -8,10 +11,8 @@ export class SessionStorageProvider<T> implements StorageProvider<T> {
 	}
 
 	async get(key: string): Promise<T | null> {
-		if (typeof window === 'undefined') return null;
-
 		try {
-			const stored = sessionStorage.getItem(key);
+			const stored = memoryStorage.get(key);
 			if (!stored) return null;
 
 			const deserialize = this.options.deserialize ?? JSON.parse;
@@ -30,35 +31,36 @@ export class SessionStorageProvider<T> implements StorageProvider<T> {
 			// Legacy data format - treat as unexpired
 			return parsedData;
 		} catch (error) {
-			console.warn(`Failed to load from sessionStorage for key "${key}":`, error);
+			console.warn(`Failed to load from memory storage for key "${key}":`, error);
 			return null;
 		}
 	}
 
 	async set(key: string, value: T): Promise<void> {
-		if (typeof window === 'undefined') return;
-
 		try {
 			const serialize = this.options.serialize ?? JSON.stringify;
 			const dataToStore = this.wrapData(value);
-			sessionStorage.setItem(key, serialize(dataToStore));
+			const serializedData = serialize(dataToStore);
+
+			memoryStorage.set(key, serializedData);
 		} catch (error) {
-			console.warn(`Failed to save to sessionStorage for key "${key}":`, error);
+			console.warn(`Failed to save to memory storage for key "${key}":`, error);
 		}
 	}
 
 	async remove(key: string): Promise<void> {
-		if (typeof window === 'undefined') return;
-		sessionStorage.removeItem(key);
+		memoryStorage.delete(key);
 	}
 
 	isLoading(): boolean {
-		return false; // sessionStorage is synchronous
+		return false; // Memory operations are synchronous
 	}
 
-	// SessionStorage doesn't support cross-tab synchronization
-	setupSync(): () => void {
-		return () => {}; // No-op cleanup function
+	// Memory storage doesn't support cross-tab sync (different process memory)
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars
+	setupSync?(_key: string, _callback: (value: T | null) => void): () => void {
+		// Return empty cleanup function
+		return () => {};
 	}
 
 	private wrapData(value: T): StoredData<T> {
@@ -86,5 +88,15 @@ export class SessionStorageProvider<T> implements StorageProvider<T> {
 
 	private isTimeoutEnabled(): boolean {
 		return this.options.timeoutMinutes != null && this.options.timeoutMinutes > 0;
+	}
+
+	// Static method to clear all memory storage (useful for testing)
+	static clear(): void {
+		memoryStorage.clear();
+	}
+
+	// Static method to get storage size (useful for debugging)
+	static size(): number {
+		return memoryStorage.size;
 	}
 }

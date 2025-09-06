@@ -8,22 +8,14 @@ export default defineConfig({
 	},
 	test: {
 		expect: { requireAssertions: true },
-		projects: [
-			{
-				extends: './vite.config.ts',
-				test: {
-					name: 'client',
-					environment: 'browser',
-					browser: {
-						enabled: true,
-						provider: 'playwright',
-						instances: [{ browser: 'chromium' }]
-					},
-					include: ['src/**/*.svelte.{test,spec}.{js,ts}'],
-					exclude: ['src/lib/server/**'],
-					setupFiles: ['./vitest-setup-client.ts']
-				}
+		environment: 'jsdom',
+		include: ['src/**/*.{test,spec}.{js,ts}', 'src/**/*.svelte.{test,spec}.{js,ts}'],
+		exclude: ['src/lib/server/**']
+	},
+	// Tell Vitest to use the `browser` entry points in `package.json` files, even though it's running in Node
+	resolve: process.env.VITEST
+		? {
+				conditions: ['browser']
 			}
-		]
-	}
+		: undefined
 });

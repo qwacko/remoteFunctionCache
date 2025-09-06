@@ -1,4 +1,4 @@
-import { query, command, form } from '$app/server';
+import { query, form } from '$app/server';
 import * as v from 'valibot';
 
 // Simulated database for demo purposes
@@ -59,16 +59,16 @@ export const getUsers = query(async () => {
 export const addLike = form(async (data) => {
 	await delay(200);
 	const postIdString = data.get('postId');
-	
+
 	if (!postIdString || typeof postIdString !== 'string') {
 		throw new Error('Invalid post ID');
 	}
-	
+
 	const postId = parseInt(postIdString, 10);
 	if (isNaN(postId)) {
 		throw new Error('Invalid post ID format');
 	}
-	
+
 	const post = posts.find((p) => p.id === postId);
 	if (post) {
 		post.likes++;

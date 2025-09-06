@@ -91,12 +91,14 @@ export class LocalStorageProvider<T> implements StorageProvider<T> {
 		};
 	}
 
-	private isStoredData(data: any): data is StoredData<T> {
-		return data && 
-			typeof data === 'object' && 
-			'timestamp' in data && 
+	private isStoredData(data: unknown): data is StoredData<T> {
+		return (
+			!!data &&
+			typeof data === 'object' &&
+			'timestamp' in data &&
 			'value' in data &&
-			typeof data.timestamp === 'number';
+			typeof data.timestamp === 'number'
+		);
 	}
 
 	private isDataExpired(timestamp: number): boolean {

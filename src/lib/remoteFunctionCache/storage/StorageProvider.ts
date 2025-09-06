@@ -9,7 +9,7 @@ export interface StorageProvider<T> {
 
 	/**
 	 * Set a value in storage
-	 * @param key - The storage key  
+	 * @param key - The storage key
 	 * @param value - The value to store
 	 * @returns Promise that resolves when the value is stored
 	 */
@@ -44,6 +44,6 @@ export interface StoredData<T> {
 
 export interface StorageOptions {
 	timeoutMinutes?: number | null;
-	serialize?: (value: any) => string;
-	deserialize?: (value: string) => any;
+	serialize?: (value: unknown) => string;
+	deserialize?: (value: string) => unknown;
 }

@@ -46,7 +46,7 @@
 		This library provides intelligent caching for SvelteKit's remote functions. It automatically:
 	</p>
 	<ul>
-		<li>Caches function results in localStorage, sessionStorage, or IndexedDB</li>
+		<li>Caches function results in localStorage, sessionStorage, IndexedDB, or memory</li>
 		<li>Provides loading and error states</li>
 		<li>Supports cache expiration</li>
 		<li>Enables cross-tab synchronization</li>
@@ -85,6 +85,7 @@
 				<option value="local">localStorage</option>
 				<option value="session">sessionStorage</option>
 				<option value="indexeddb">IndexedDB</option>
+				<option value="memory">Memory</option>
 			</select>
 		</div>
 		<div class="form-group">
@@ -126,7 +127,7 @@
 		</div>
 	{:else if postsCache.value?.current}
 		<div class="grid">
-			{#each postsCache.value.current as post}
+			{#each postsCache.value.current as post (post.id)}
 				<div class="card">
 					<h4>{post.title}</h4>
 					<div class="flex justify-between items-center">

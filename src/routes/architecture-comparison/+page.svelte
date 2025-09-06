@@ -40,10 +40,10 @@
 <div class="card">
 	<h2>✨ Clean Architecture with Storage Providers</h2>
 	<p>
-		The library now uses a clean architecture with dependency injection and dedicated storage providers.
-		This makes it easier to debug, test, and extend with new storage types.
+		The library now uses a clean architecture with dependency injection and dedicated storage
+		providers. This makes it easier to debug, test, and extend with new storage types.
 	</p>
-	
+
 	<div class="grid grid-cols-3">
 		<div class="card">
 			<h4>🗄️ Storage Providers</h4>
@@ -80,14 +80,19 @@
 		<input bind:value={searchQuery} placeholder="Search posts..." class="text-lg" />
 	</div>
 	<p class="text-sm text-gray-600 mb-4">
-		Using IndexedDB storage with cross-tab synchronization. Try searching for the same term multiple times.
+		Using IndexedDB storage with cross-tab synchronization. Try searching for the same term multiple
+		times.
 	</p>
-	
+
 	<div class="mb-4">
-		<strong>Loading:</strong> {searchCache.loading ? 'Yes' : 'No'}<br/>
-		<strong>Refreshing:</strong> {searchCache.refreshing ? 'Yes' : 'No'}<br/>
-		<strong>Error:</strong> {searchCache.error ? searchCache.error.message : 'None'}<br/>
-		<strong>Last Updated:</strong> {searchCache.updateTime.toLocaleTimeString()}
+		<strong>Loading:</strong>
+		{searchCache.loading ? 'Yes' : 'No'}<br />
+		<strong>Refreshing:</strong>
+		{searchCache.refreshing ? 'Yes' : 'No'}<br />
+		<strong>Error:</strong>
+		{searchCache.error ? searchCache.error.message : 'None'}<br />
+		<strong>Last Updated:</strong>
+		{searchCache.updateTime.toLocaleTimeString()}
 	</div>
 
 	{#if searchQuery.trim() && !searchCache.loading}
@@ -97,7 +102,7 @@
 			</div>
 		{:else if searchCache.value?.current}
 			<div class="grid">
-				{#each searchCache.value.current as post}
+				{#each searchCache.value.current as post (post.id)}
 					<div class="card">
 						<h4>{post.title}</h4>
 						<p class="text-sm">{post.content}</p>
@@ -123,7 +128,7 @@
 		<div class="card">
 			<h4>localStorage</h4>
 			<div class="text-xs text-gray-600 mb-2">Persistent, cross-tab sync, 15min timeout</div>
-			
+
 			<div class="mb-4">
 				<span class="status" class:status-loading={usersLocalCache.loading}>
 					{usersLocalCache.loading ? 'Loading' : 'Loaded'}
@@ -135,8 +140,10 @@
 
 			{#if usersLocalCache.value?.current}
 				<div class="text-sm">
-					<strong>Users:</strong> {usersLocalCache.value.current.length}<br/>
-					<strong>Updated:</strong> {usersLocalCache.updateTime.toLocaleTimeString()}
+					<strong>Users:</strong>
+					{usersLocalCache.value.current.length}<br />
+					<strong>Updated:</strong>
+					{usersLocalCache.updateTime.toLocaleTimeString()}
 				</div>
 			{/if}
 		</div>
@@ -144,7 +151,7 @@
 		<div class="card">
 			<h4>sessionStorage</h4>
 			<div class="text-xs text-gray-600 mb-2">Session-only, no sync, 5min timeout</div>
-			
+
 			<div class="mb-4">
 				<span class="status" class:status-loading={usersSessionCache.loading}>
 					{usersSessionCache.loading ? 'Loading' : 'Loaded'}
@@ -156,8 +163,10 @@
 
 			{#if usersSessionCache.value?.current}
 				<div class="text-sm">
-					<strong>Users:</strong> {usersSessionCache.value.current.length}<br/>
-					<strong>Updated:</strong> {usersSessionCache.updateTime.toLocaleTimeString()}
+					<strong>Users:</strong>
+					{usersSessionCache.value.current.length}<br />
+					<strong>Updated:</strong>
+					{usersSessionCache.updateTime.toLocaleTimeString()}
 				</div>
 			{/if}
 		</div>
@@ -165,7 +174,7 @@
 		<div class="card">
 			<h4>IndexedDB</h4>
 			<div class="text-xs text-gray-600 mb-2">Async, large data, cross-tab sync, 20min timeout</div>
-			
+
 			<div class="mb-4">
 				<span class="status" class:status-loading={usersIndexedDBCache.loading}>
 					{usersIndexedDBCache.loading ? 'Loading' : 'Loaded'}
@@ -177,8 +186,10 @@
 
 			{#if usersIndexedDBCache.value?.current}
 				<div class="text-sm">
-					<strong>Users:</strong> {usersIndexedDBCache.value.current.length}<br/>
-					<strong>Updated:</strong> {usersIndexedDBCache.updateTime.toLocaleTimeString()}
+					<strong>Users:</strong>
+					{usersIndexedDBCache.value.current.length}<br />
+					<strong>Updated:</strong>
+					{usersIndexedDBCache.updateTime.toLocaleTimeString()}
 				</div>
 			{/if}
 		</div>
@@ -191,7 +202,9 @@
 		<div class="card">
 			<h4>🔧 Developer Experience</h4>
 			<ul class="text-sm">
-				<li><strong>Better debugging:</strong> Storage issues are isolated to specific providers</li>
+				<li>
+					<strong>Better debugging:</strong> Storage issues are isolated to specific providers
+				</li>
 				<li><strong>Cleaner code:</strong> Separation of concerns makes logic easier to follow</li>
 				<li><strong>Easy testing:</strong> Each storage provider can be tested independently</li>
 				<li><strong>Predictable behavior:</strong> Storage-specific logic is encapsulated</li>

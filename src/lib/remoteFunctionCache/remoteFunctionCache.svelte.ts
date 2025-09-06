@@ -4,8 +4,9 @@ import { untrack } from 'svelte';
 
 import { CustomPersistedState } from './CustomPersistedState.svelte.js';
 import { createStorageProvider, type StorageType } from './storage/StorageFactory.js';
+import { SvelteDate } from 'svelte/reactivity';
 
-const argToKey = (arg: any) => JSON.stringify(arg);
+const argToKey = (arg: unknown) => JSON.stringify(arg);
 
 export function remoteFunctionCache<TArg, TReturn>(
 	fn: RemoteQueryFunction<TArg, TReturn>,
@@ -29,9 +30,9 @@ export function remoteFunctionCache<TArg, TReturn>(
 	} = {}
 ) {
 	const functionKey = key || fn.name || 'anonymous';
-	
+
 	// Debug logging helper
-	const debugLog = (message: string, ...args: any[]) => {
+	const debugLog = (message: string, ...args: unknown[]) => {
 		if (debug) {
 			console.log(`[${functionKey}] ${message}`, ...args);
 		}
@@ -47,21 +48,23 @@ export function remoteFunctionCache<TArg, TReturn>(
 		deserialize: (val) => devalue.parse(val) as TReturn
 	});
 
-	let state = new CustomPersistedState<TReturn | undefined>(
-		`${functionKey}-${argToKey(arg())}`,
+	// Initialize with a placeholder key first to avoid undefined arg issues
+	const state = new CustomPersistedState<TReturn | undefined>(
+		`${functionKey}-__initializing__`,
 		initialValue,
 		storageProvider
 	);
 
 	// Unified state management
-	let loadingInternal = $state(true);
-	let refreshingInternal = $state(false); 
-	let error = $state<any>();
-	let updateTime = $state<Date>(new Date());
-	let prevArgToKey = $state<string | undefined>(null as any);
+	let loadingInternal = $state(false); // Start as false until properly initialized
+	let refreshingInternal = $state(false);
+	let error = $state<Error | undefined>();
+	let updateTime = new SvelteDate();
+	let prevArgToKey = $state<string | undefined>(undefined);
 
 	// Monitor remote function directly using SvelteKit's reactive system
-	const monitorRemote = $derived(fn(arg() as TArg));
+	// Handle undefined args safely for functions that don't require arguments
+	const monitorRemote = $derived(fn((arg() ?? undefined) as TArg));
 	const monitorRemoteValue = $derived(monitorRemote.current);
 
 	const refresh = (callFunction: boolean = false) => {
@@ -73,7 +76,7 @@ export function remoteFunctionCache<TArg, TReturn>(
 		const hasCache = state.current !== undefined;
 		refreshingInternal = true;
 		loadingInternal = !hasCache; // Only show loading spinner if no cached data
-		
+
 		// Clear any previous error at the start of a new request
 		error = undefined;
 
@@ -81,7 +84,7 @@ export function remoteFunctionCache<TArg, TReturn>(
 			try {
 				// If using async storage (IndexedDB), wait for loading to complete
 				while (state.isLoading) {
-					await new Promise(resolve => setTimeout(resolve, 10));
+					await new Promise((resolve) => setTimeout(resolve, 10));
 				}
 
 				// If we now have data from cache, don't make a network request unless forced
@@ -91,22 +94,18 @@ export function remoteFunctionCache<TArg, TReturn>(
 					return;
 				}
 
-				let result;
+				// Always use latestArgs for consistency, but handle undefined properly
 				let queryPromise;
 				if (latestArgs !== undefined) {
 					queryPromise = fn(latestArgs);
 				} else {
-					// When args are undefined, we need to handle this case properly
-					// Since the function signature expects TArg, we pass the current arg value
-					const currentArg = arg();
-					if (currentArg !== undefined) {
-						queryPromise = fn(currentArg);
-					} else {
-						// This shouldn't happen in normal usage, but handle gracefully
-						throw new Error('Cannot call function with undefined arguments');
-					}
+					// For functions that don't need arguments (like getPosts),
+					// we still need to call them but TypeScript requires TArg
+					// Cast undefined to TArg since the function should handle it
+					queryPromise = fn(undefined as TArg);
 				}
 
+				let result;
 				if (callFunction) {
 					debugLog('Calling function with forced refresh');
 					// Force refresh the remote function cache first
@@ -121,9 +120,9 @@ export function remoteFunctionCache<TArg, TReturn>(
 				debugLog('State updated to:', state.current);
 				error = undefined;
 			} catch (err) {
-				error = err;
+				error = err instanceof Error ? err : new Error(String(err));
 			} finally {
-				updateTime = new Date();
+				updateTime = new SvelteDate();
 				refreshingInternal = false;
 				loadingInternal = false;
 			}
@@ -136,13 +135,24 @@ export function remoteFunctionCache<TArg, TReturn>(
 	$effect(() => {
 		arg();
 		untrack(() => {
-			const currentKey = argToKey(arg());
-			if (prevArgToKey !== currentKey) {
+			const currentArg = arg();
+			const currentKey = argToKey(currentArg);
+
+			// Initialize the key properly on first run
+			if (prevArgToKey === undefined) {
+				prevArgToKey = currentKey;
+				// Update the key from the initializing placeholder
+				state.newKey(`${functionKey}-${currentKey}`, initialValue, false);
+
+				// Start loading after proper initialization
+				loadingInternal = true;
+				refresh();
+			} else if (prevArgToKey !== currentKey) {
 				prevArgToKey = currentKey;
 				// Retain the previous value to avoid flashing during cache load
 				const shouldRetainValue = state.current !== undefined;
 				state.newKey(`${functionKey}-${currentKey}`, initialValue, shouldRetainValue);
-				
+
 				// Use a proper coordination mechanism instead of setTimeout
 				refresh();
 			}
@@ -174,7 +184,7 @@ export function remoteFunctionCache<TArg, TReturn>(
 
 				// Update our cache with the fresh data from SvelteKit
 				state.current = currentRemoteValue;
-				updateTime = new Date();
+				updateTime = new SvelteDate();
 				error = undefined;
 
 				debugLog('Auto-sync: Cache updated successfully');
@@ -206,7 +216,7 @@ export function remoteFunctionCache<TArg, TReturn>(
 		refresh: () => refresh(true),
 		setValue: (val: TReturn) => {
 			state.current = val;
-			updateTime = new Date();
+			updateTime = new SvelteDate();
 		},
 		destroy: () => {
 			debugLog('Destroying remoteFunctionCache instance');

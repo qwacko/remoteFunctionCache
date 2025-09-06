@@ -5,7 +5,7 @@ A powerful caching library for SvelteKit's remote functions that provides intell
 ## Features
 
 - 🚀 **Intelligent Caching**: Automatically caches remote function results
-- 💾 **Multiple Storage Options**: localStorage, sessionStorage, and IndexedDB support  
+- 💾 **Multiple Storage Options**: localStorage, sessionStorage, IndexedDB, and memory support
 - ⏰ **Automatic Expiration**: Configurable timeout with automatic cleanup
 - 🔄 **Cross-tab Synchronization**: Share cache updates across browser tabs
 - 📱 **Reactive Arguments**: Automatically handles reactive argument changes
@@ -49,14 +49,14 @@ export default config;
 <script>
 	import { remoteFunctionCache } from 'remotefunctioncache';
 	import { getUsers } from './data.remote.js';
-	
+
 	// Create a cached version of your remote function
 	const usersCache = remoteFunctionCache(getUsers, () => undefined, {
 		key: 'users-list',
 		storage: 'local',
 		timeoutMinutes: 10,
 		syncTabs: true,
-		autoSync: true  // Enable automatic sync with SvelteKit
+		autoSync: true // Enable automatic sync with SvelteKit
 	});
 </script>
 
@@ -72,9 +72,7 @@ export default config;
 	</ul>
 {/if}
 
-<button onclick={() => usersCache.refresh()}>
-	Refresh Data
-</button>
+<button onclick={() => usersCache.refresh()}> Refresh Data </button>
 ```
 
 ## API Reference
@@ -94,7 +92,7 @@ Creates a cached version of a remote function.
 ```typescript
 {
 	key?: string;              // Cache key (defaults to function name)
-	storage?: 'local' | 'session' | 'indexeddb';  // Storage type
+	storage?: 'local' | 'session' | 'indexeddb' | 'memory';  // Storage type
 	syncTabs?: boolean;        // Enable cross-tab synchronization
 	timeoutMinutes?: number | null;  // Cache expiration (null = no expiry)
 	initialValue?: TReturn;    // Initial value before first load
@@ -190,15 +188,27 @@ Creates a cached version of a remote function.
 </script>
 ```
 
+### Memory for Testing and Temporary Data
+
+```svelte
+<script>
+	const tempCache = remoteFunctionCache(getTestData, () => undefined, {
+		key: 'temporary-data',
+		storage: 'memory',
+		syncTabs: false, // Memory storage doesn't support cross-tab sync
+		timeoutMinutes: null, // No expiry (lost on page reload anyway)
+		autoSync: true
+	});
+</script>
+```
+
 ### Manual Cache Management
 
 ```svelte
 <script>
 	// Set custom data
 	const setCustomData = () => {
-		usersCache.setValue([
-			{ id: 1, name: 'Custom User' }
-		]);
+		usersCache.setValue([{ id: 1, name: 'Custom User' }]);
 	};
 
 	// Force refresh
@@ -216,6 +226,7 @@ Creates a cached version of a remote function.
 ## Storage Types
 
 ### localStorage
+
 - ✅ Persistent across browser sessions
 - ✅ Cross-tab synchronization support
 - ⚠️ ~5-10MB storage limit
@@ -223,6 +234,7 @@ Creates a cached version of a remote function.
 - ⚠️ String-only storage (JSON serialization)
 
 ### sessionStorage
+
 - ⚠️ Cleared when tab/browser closes
 - ❌ No cross-tab synchronization (automatically upgrades to localStorage if syncTabs is enabled)
 - ⚠️ ~5-10MB storage limit
@@ -230,11 +242,21 @@ Creates a cached version of a remote function.
 - ⚠️ String-only storage (JSON serialization)
 
 ### IndexedDB
+
 - ✅ Persistent across browser sessions
 - ✅ Cross-tab sync via BroadcastChannel
 - ✅ Large storage capacity (~GB)
 - ✅ Asynchronous API (non-blocking)
 - ✅ Rich data type support
+
+### Memory
+
+- ⚠️ Lost on page reload
+- ❌ No cross-tab synchronization
+- ✅ No storage limit (RAM-based)
+- ✅ Fastest access (synchronous)
+- ✅ Rich data types (native JavaScript objects)
+- 🔧 Ideal for testing and temporary data
 
 ## Performance Benefits
 
@@ -247,7 +269,7 @@ The cache provides significant performance improvements:
 Load testing shows exponential performance gains with concurrent requests:
 
 | Concurrent Requests | Uncached | Cached | Improvement |
-|---------------------|----------|--------|-------------|
+| ------------------- | -------- | ------ | ----------- |
 | 10                  | 2.1s     | 0.3s   | 85% faster  |
 | 50                  | 8.5s     | 0.8s   | 90% faster  |
 | 100                 | 15.2s    | 1.2s   | 92% faster  |
@@ -279,7 +301,7 @@ The library includes comprehensive demo pages:
 
 - **Basic Usage** (`/`): Core functionality and basic examples
 - **Advanced Features** (`/advanced`): Cross-tab sync, multiple instances, search
-- **Storage Comparison** (`/storage-comparison`): Compare different storage backends
+- **Storage Comparison** (`/storage-comparison`): Compare all storage backends (localStorage, sessionStorage, IndexedDB, Memory)
 - **Performance Analysis** (`/performance`): Load testing and performance metrics
 
 ## Browser Support
@@ -297,11 +319,9 @@ Full TypeScript support is included with proper type inference:
 ```typescript
 import type { RemoteQueryFunction } from '@sveltejs/kit';
 
-const typedCache = remoteFunctionCache<void, User[]>(
-	getUsers,
-	() => undefined,
-	{ key: 'typed-users' }
-);
+const typedCache = remoteFunctionCache<void, User[]>(getUsers, () => undefined, {
+	key: 'typed-users'
+});
 
 // usersCache.value?.current is properly typed as User[] | undefined
 ```
