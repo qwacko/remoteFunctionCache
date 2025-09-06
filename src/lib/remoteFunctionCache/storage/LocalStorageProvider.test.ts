@@ -59,7 +59,7 @@ describe('LocalStorageProvider', () => {
 			provider = new LocalStorageProvider({ timeoutMinutes: 1 });
 			const storedData = {
 				value: 'test value',
-				timestamp: Date.now() - (2 * 60 * 1000) // 2 minutes ago
+				timestamp: Date.now() - 2 * 60 * 1000 // 2 minutes ago
 			};
 			localStorageMock.getItem.mockReturnValue(JSON.stringify(storedData));
 

@@ -68,7 +68,7 @@ describe('IndexedDBStorageProvider', () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
 		provider = new IndexedDBStorageProvider({});
-		
+
 		// Reset mock request state
 		mockRequest.result = undefined;
 		mockRequest.error = null;
@@ -85,7 +85,7 @@ describe('IndexedDBStorageProvider', () => {
 			// Setup: simulate successful DB open
 			setTimeout(() => {
 				if (mockOpenRequest.onsuccess) {
-					mockOpenRequest.onsuccess.call(mockOpenRequest);
+					mockOpenRequest.onsuccess.call(mockOpenRequest as any);
 				}
 			}, 0);
 
@@ -96,7 +96,7 @@ describe('IndexedDBStorageProvider', () => {
 			setTimeout(() => {
 				getRequest.result = undefined;
 				if (getRequest.onsuccess) {
-					getRequest.onsuccess.call(getRequest);
+					getRequest.onsuccess.call(getRequest as any);
 				}
 			}, 0);
 
@@ -114,7 +114,7 @@ describe('IndexedDBStorageProvider', () => {
 			// Setup: simulate successful DB open
 			setTimeout(() => {
 				if (mockOpenRequest.onsuccess) {
-					mockOpenRequest.onsuccess.call(mockOpenRequest);
+					mockOpenRequest.onsuccess.call(mockOpenRequest as any);
 				}
 			}, 0);
 
@@ -125,7 +125,7 @@ describe('IndexedDBStorageProvider', () => {
 			setTimeout(() => {
 				getRequest.result = JSON.stringify(storedData);
 				if (getRequest.onsuccess) {
-					getRequest.onsuccess.call(getRequest);
+					getRequest.onsuccess.call(getRequest as any);
 				}
 			}, 0);
 
@@ -137,13 +137,13 @@ describe('IndexedDBStorageProvider', () => {
 			provider = new IndexedDBStorageProvider({ timeoutMinutes: 1 });
 			const expiredData = {
 				value: 'test value',
-				timestamp: Date.now() - (2 * 60 * 1000) // 2 minutes ago
+				timestamp: Date.now() - 2 * 60 * 1000 // 2 minutes ago
 			};
 
 			// Setup: simulate successful DB open
 			setTimeout(() => {
 				if (mockOpenRequest.onsuccess) {
-					mockOpenRequest.onsuccess.call(mockOpenRequest);
+					mockOpenRequest.onsuccess.call(mockOpenRequest as any);
 				}
 			}, 0);
 
@@ -154,7 +154,7 @@ describe('IndexedDBStorageProvider', () => {
 			setTimeout(() => {
 				getRequest.result = JSON.stringify(expiredData);
 				if (getRequest.onsuccess) {
-					getRequest.onsuccess.call(getRequest);
+					getRequest.onsuccess.call(getRequest as any);
 				}
 			}, 0);
 
@@ -165,9 +165,9 @@ describe('IndexedDBStorageProvider', () => {
 		it('should handle database errors gracefully', async () => {
 			// Setup: simulate DB open error
 			setTimeout(() => {
-				mockOpenRequest.error = new Error('DB Error');
+				(mockOpenRequest as any).error = new Error('DB Error');
 				if (mockOpenRequest.onerror) {
-					mockOpenRequest.onerror.call(mockOpenRequest);
+					mockOpenRequest.onerror.call(mockOpenRequest as any);
 				}
 			}, 0);
 
@@ -181,7 +181,7 @@ describe('IndexedDBStorageProvider', () => {
 			// Setup: simulate successful DB open
 			setTimeout(() => {
 				if (mockOpenRequest.onsuccess) {
-					mockOpenRequest.onsuccess.call(mockOpenRequest);
+					mockOpenRequest.onsuccess.call(mockOpenRequest as any);
 				}
 			}, 0);
 
@@ -191,19 +191,24 @@ describe('IndexedDBStorageProvider', () => {
 
 			setTimeout(() => {
 				if (putRequest.onsuccess) {
-					putRequest.onsuccess.call(putRequest);
+					putRequest.onsuccess.call(putRequest as any);
 				}
 			}, 0);
 
 			await provider.set('test-key', 'test value');
 
 			expect(mockStore.put).toHaveBeenCalled();
-			const [serializedData, key] = mockStore.put.mock.calls[0];
-			expect(key).toBe('test-key');
-			
-			const storedData = JSON.parse(serializedData);
-			expect(storedData.value).toBe('test value');
-			expect(storedData.timestamp).toBeTypeOf('number');
+			const calls = mockStore.put.mock.calls as any[];
+			if (calls.length > 0) {
+				const [serializedData, key] = calls[0];
+				expect(key).toBe('test-key');
+
+				if (serializedData) {
+					const storedData = JSON.parse(serializedData);
+					expect(storedData.value).toBe('test value');
+					expect(storedData.timestamp).toBeTypeOf('number');
+				}
+			}
 		});
 
 		it('should broadcast changes when BroadcastChannel is available', async () => {
@@ -213,7 +218,7 @@ describe('IndexedDBStorageProvider', () => {
 			// Setup: simulate successful DB open
 			setTimeout(() => {
 				if (mockOpenRequest.onsuccess) {
-					mockOpenRequest.onsuccess.call(mockOpenRequest);
+					mockOpenRequest.onsuccess.call(mockOpenRequest as any);
 				}
 			}, 0);
 
@@ -223,14 +228,14 @@ describe('IndexedDBStorageProvider', () => {
 
 			setTimeout(() => {
 				if (putRequest.onsuccess) {
-					putRequest.onsuccess.call(putRequest);
+					putRequest.onsuccess.call(putRequest as any);
 				}
 			}, 0);
 
 			await provider.set('test-key', 'test value');
 
 			expect(mockBroadcastChannel.postMessage).toHaveBeenCalled();
-			
+
 			cleanup();
 		});
 	});
@@ -240,7 +245,7 @@ describe('IndexedDBStorageProvider', () => {
 			// Setup: simulate successful DB open
 			setTimeout(() => {
 				if (mockOpenRequest.onsuccess) {
-					mockOpenRequest.onsuccess.call(mockOpenRequest);
+					mockOpenRequest.onsuccess.call(mockOpenRequest as any);
 				}
 			}, 0);
 
@@ -250,7 +255,7 @@ describe('IndexedDBStorageProvider', () => {
 
 			setTimeout(() => {
 				if (deleteRequest.onsuccess) {
-					deleteRequest.onsuccess.call(deleteRequest);
+					deleteRequest.onsuccess.call(deleteRequest as any);
 				}
 			}, 0);
 

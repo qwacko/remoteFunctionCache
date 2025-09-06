@@ -158,7 +158,7 @@ describe('remoteFunctionCache with Svelte runes', () => {
 			flushSync();
 
 			expect(cache).toBeDefined();
-			
+
 			consoleSpy.mockRestore();
 		});
 
@@ -194,7 +194,7 @@ describe('remoteFunctionCache with Svelte runes', () => {
 			const mockFn = vi.fn().mockReturnValue({
 				current: 'complex result'
 			});
-			
+
 			let complexArgs = $state({ nested: { data: [1, 2, 3] }, flag: true });
 			const mockArgs = () => complexArgs;
 
@@ -235,7 +235,7 @@ describe('remoteFunctionCache with Svelte runes', () => {
 			flushSync();
 			expect(localCache).toBeDefined();
 
-			// Test session storage  
+			// Test session storage
 			const sessionCache = remoteFunctionCache(mockFn, mockArgs, {
 				key: 'test-cache-2',
 				storage: 'session'
@@ -290,7 +290,7 @@ describe('remoteFunctionCache with Svelte runes', () => {
 			expect(typeof cache.refresh).toBe('function');
 			expect(typeof cache.setValue).toBe('function');
 			expect(typeof cache.destroy).toBe('function');
-			
+
 			// Check readonly properties
 			expect(typeof cache.loading).toBe('boolean');
 			expect(typeof cache.refreshing).toBe('boolean');
@@ -302,7 +302,7 @@ describe('remoteFunctionCache with Svelte runes', () => {
 			// Should be able to call methods
 			cache.setValue('new value');
 			flushSync();
-			
+
 			cache.destroy();
 		});
 
