@@ -41,7 +41,7 @@ export class MemoryStorageProvider<T> implements StorageProvider<T> {
 			const serialize = this.options.serialize ?? JSON.stringify;
 			const dataToStore = this.wrapData(value);
 			const serializedData = serialize(dataToStore);
-			
+
 			memoryStorage.set(key, serializedData);
 		} catch (error) {
 			console.warn(`Failed to save to memory storage for key "${key}":`, error);

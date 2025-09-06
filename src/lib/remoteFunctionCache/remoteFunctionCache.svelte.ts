@@ -48,21 +48,23 @@ export function remoteFunctionCache<TArg, TReturn>(
 		deserialize: (val) => devalue.parse(val) as TReturn
 	});
 
+	// Initialize with a placeholder key first to avoid undefined arg issues
 	const state = new CustomPersistedState<TReturn | undefined>(
-		`${functionKey}-${argToKey(arg())}`,
+		`${functionKey}-__initializing__`,
 		initialValue,
 		storageProvider
 	);
 
 	// Unified state management
-	let loadingInternal = $state(true);
+	let loadingInternal = $state(false); // Start as false until properly initialized
 	let refreshingInternal = $state(false);
 	let error = $state<Error | undefined>();
 	let updateTime = new SvelteDate();
 	let prevArgToKey = $state<string | undefined>(undefined);
 
 	// Monitor remote function directly using SvelteKit's reactive system
-	const monitorRemote = $derived(fn(arg() as TArg));
+	// Handle undefined args safely for functions that don't require arguments
+	const monitorRemote = $derived(fn((arg() ?? undefined) as TArg));
 	const monitorRemoteValue = $derived(monitorRemote.current);
 
 	const refresh = (callFunction: boolean = false) => {
@@ -92,22 +94,18 @@ export function remoteFunctionCache<TArg, TReturn>(
 					return;
 				}
 
-				let result;
+				// Always use latestArgs for consistency, but handle undefined properly
 				let queryPromise;
 				if (latestArgs !== undefined) {
 					queryPromise = fn(latestArgs);
 				} else {
-					// When args are undefined, we need to handle this case properly
-					// Since the function signature expects TArg, we pass the current arg value
-					const currentArg = arg();
-					if (currentArg !== undefined) {
-						queryPromise = fn(currentArg);
-					} else {
-						// This shouldn't happen in normal usage, but handle gracefully
-						throw new Error('Cannot call function with undefined arguments');
-					}
+					// For functions that don't need arguments (like getPosts),
+					// we still need to call them but TypeScript requires TArg
+					// Cast undefined to TArg since the function should handle it
+					queryPromise = fn(undefined as TArg);
 				}
 
+				let result;
 				if (callFunction) {
 					debugLog('Calling function with forced refresh');
 					// Force refresh the remote function cache first
@@ -137,8 +135,19 @@ export function remoteFunctionCache<TArg, TReturn>(
 	$effect(() => {
 		arg();
 		untrack(() => {
-			const currentKey = argToKey(arg());
-			if (prevArgToKey !== currentKey) {
+			const currentArg = arg();
+			const currentKey = argToKey(currentArg);
+
+			// Initialize the key properly on first run
+			if (prevArgToKey === undefined) {
+				prevArgToKey = currentKey;
+				// Update the key from the initializing placeholder
+				state.newKey(`${functionKey}-${currentKey}`, initialValue, false);
+
+				// Start loading after proper initialization
+				loadingInternal = true;
+				refresh();
+			} else if (prevArgToKey !== currentKey) {
 				prevArgToKey = currentKey;
 				// Retain the previous value to avoid flashing during cache load
 				const shouldRetainValue = state.current !== undefined;

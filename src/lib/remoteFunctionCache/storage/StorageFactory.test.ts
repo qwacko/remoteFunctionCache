@@ -21,31 +21,31 @@ describe('StorageFactory', () => {
 	describe('createStorageProvider', () => {
 		it('should create LocalStorageProvider for "local" type', () => {
 			const options = { timeoutMinutes: 30 };
-			
+
 			createStorageProvider('local', options);
-			
+
 			expect(LocalStorageProvider).toHaveBeenCalledWith(options);
 		});
 
 		it('should create SessionStorageProvider for "session" type', () => {
 			const options = { timeoutMinutes: 15 };
-			
+
 			createStorageProvider('session', options);
-			
+
 			expect(SessionStorageProvider).toHaveBeenCalledWith(options);
 		});
 
 		it('should create IndexedDBStorageProvider for "indexeddb" type', () => {
 			const options = { timeoutMinutes: 60 };
-			
+
 			createStorageProvider('indexeddb', options);
-			
+
 			expect(IndexedDBStorageProvider).toHaveBeenCalledWith(options);
 		});
 
 		it('should create provider with default empty options', () => {
 			createStorageProvider('local');
-			
+
 			expect(LocalStorageProvider).toHaveBeenCalledWith({});
 		});
 
@@ -67,9 +67,9 @@ describe('StorageFactory', () => {
 				serialize: vi.fn(),
 				deserialize: vi.fn()
 			};
-			
+
 			createStorageProvider('indexeddb', complexOptions);
-			
+
 			expect(IndexedDBStorageProvider).toHaveBeenCalledWith(complexOptions);
 		});
 	});

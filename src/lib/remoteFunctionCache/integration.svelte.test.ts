@@ -35,28 +35,26 @@ describe('remoteFunctionCache Integration Tests', () => {
 		it('should handle API-like function calls with caching', () => {
 			const cleanup = $effect.root(() => {
 				// Simulate API function
-				const fetchUserData = vi.fn()
+				const fetchUserData = vi
+					.fn()
 					.mockResolvedValueOnce({ id: 1, name: 'John' })
 					.mockResolvedValueOnce({ id: 1, name: 'John Updated' });
 
 				const mockApiFunction = vi.fn().mockImplementation((userId: number) => ({
 					current: undefined,
-					refresh: () => fetchUserData(userId).then(data => {
-						mockApiFunction.mockReturnValue({ current: data });
-						return data;
-					})
+					refresh: () =>
+						fetchUserData(userId).then((data: any) => {
+							mockApiFunction.mockReturnValue({ current: data });
+							return data;
+						})
 				}));
 
 				let userId = $state(1);
-				const cache = remoteFunctionCache(
-					mockApiFunction,
-					() => userId,
-					{
-						key: 'user-data',
-						storage: 'memory',
-						timeoutMinutes: 5
-					}
-				);
+				const cache = remoteFunctionCache(mockApiFunction, () => userId, {
+					key: 'user-data',
+					storage: 'memory',
+					timeoutMinutes: 5
+				});
 
 				flushSync();
 
@@ -71,16 +69,12 @@ describe('remoteFunctionCache Integration Tests', () => {
 		it('should handle argument changes properly', () => {
 			const cleanup = $effect.root(() => {
 				const mockFn = vi.fn().mockReturnValue({ current: 'result' });
-				
+
 				let searchTerm = $state('initial');
-				const cache = remoteFunctionCache(
-					mockFn,
-					() => searchTerm,
-					{
-						key: 'search-results',
-						storage: 'memory'
-					}
-				);
+				const cache = remoteFunctionCache(mockFn, () => searchTerm, {
+					key: 'search-results',
+					storage: 'memory'
+				});
 
 				flushSync();
 
@@ -98,21 +92,17 @@ describe('remoteFunctionCache Integration Tests', () => {
 		it('should handle complex argument objects', () => {
 			const cleanup = $effect.root(() => {
 				const mockFn = vi.fn().mockReturnValue({ current: 'result' });
-				
+
 				let queryParams = $state({
 					page: 1,
 					filter: 'active',
 					sort: 'name'
 				});
 
-				const cache = remoteFunctionCache(
-					mockFn,
-					() => queryParams,
-					{
-						key: 'filtered-data',
-						storage: 'memory'
-					}
-				);
+				const cache = remoteFunctionCache(mockFn, () => queryParams, {
+					key: 'filtered-data',
+					storage: 'memory'
+				});
 
 				flushSync();
 
@@ -140,14 +130,10 @@ describe('remoteFunctionCache Integration Tests', () => {
 				});
 
 				let arg = $state('test');
-				const cache = remoteFunctionCache(
-					mockFn,
-					() => arg,
-					{
-						key: 'error-test',
-						storage: 'memory'
-					}
-				);
+				const cache = remoteFunctionCache(mockFn, () => arg, {
+					key: 'error-test',
+					storage: 'memory'
+				});
 
 				flushSync();
 
@@ -161,17 +147,13 @@ describe('remoteFunctionCache Integration Tests', () => {
 		it('should handle storage errors gracefully', () => {
 			const cleanup = $effect.root(() => {
 				const mockFn = vi.fn().mockReturnValue({ current: 'result' });
-				
+
 				// Create cache that will try to use localStorage (which might fail)
 				let arg = $state('test');
-				const cache = remoteFunctionCache(
-					mockFn,
-					() => arg,
-					{
-						key: 'storage-error-test',
-						storage: 'local' // This uses localStorage which could fail
-					}
-				);
+				const cache = remoteFunctionCache(mockFn, () => arg, {
+					key: 'storage-error-test',
+					storage: 'local' // This uses localStorage which could fail
+				});
 
 				flushSync();
 
@@ -187,16 +169,12 @@ describe('remoteFunctionCache Integration Tests', () => {
 		it('should handle rapid argument changes efficiently', () => {
 			const cleanup = $effect.root(() => {
 				const mockFn = vi.fn().mockReturnValue({ current: 'result' });
-				
+
 				let counter = $state(0);
-				const cache = remoteFunctionCache(
-					mockFn,
-					() => counter,
-					{
-						key: 'rapid-changes',
-						storage: 'memory'
-					}
-				);
+				const cache = remoteFunctionCache(mockFn, () => counter, {
+					key: 'rapid-changes',
+					storage: 'memory'
+				});
 
 				flushSync();
 
@@ -217,21 +195,19 @@ describe('remoteFunctionCache Integration Tests', () => {
 			const cleanup = $effect.root(() => {
 				const mockFn1 = vi.fn().mockReturnValue({ current: 'result1' });
 				const mockFn2 = vi.fn().mockReturnValue({ current: 'result2' });
-				
+
 				let arg1 = $state('arg1');
 				let arg2 = $state('arg2');
 
-				const cache1 = remoteFunctionCache(
-					mockFn1,
-					() => arg1,
-					{ key: 'cache1', storage: 'memory' }
-				);
+				const cache1 = remoteFunctionCache(mockFn1, () => arg1, {
+					key: 'cache1',
+					storage: 'memory'
+				});
 
-				const cache2 = remoteFunctionCache(
-					mockFn2,
-					() => arg2,
-					{ key: 'cache2', storage: 'memory' }
-				);
+				const cache2 = remoteFunctionCache(mockFn2, () => arg2, {
+					key: 'cache2',
+					storage: 'memory'
+				});
 
 				flushSync();
 
@@ -248,18 +224,14 @@ describe('remoteFunctionCache Integration Tests', () => {
 		it('should handle missing key gracefully', () => {
 			const cleanup = $effect.root(() => {
 				const mockFn = vi.fn().mockReturnValue({ current: 'result' });
-				
+
 				let arg = $state('test');
-				
+
 				// No key provided - should use function name or 'anonymous'
-				const cache1 = remoteFunctionCache(
-					mockFn,
-					() => arg,
-					{ 
-						storage: 'memory',
-						key: 'explicit-key' // Provide explicit key to avoid effect cycles
-					}
-				);
+				const cache1 = remoteFunctionCache(mockFn, () => arg, {
+					storage: 'memory',
+					key: 'explicit-key' // Provide explicit key to avoid effect cycles
+				});
 
 				flushSync();
 
@@ -272,17 +244,13 @@ describe('remoteFunctionCache Integration Tests', () => {
 		it('should handle undefined initial values', () => {
 			const cleanup = $effect.root(() => {
 				const mockFn = vi.fn().mockReturnValue({ current: 'result' });
-				
+
 				let arg = $state('test');
-				const cache = remoteFunctionCache(
-					mockFn,
-					() => arg,
-					{
-						key: 'undefined-initial',
-						storage: 'memory',
-						initialValue: undefined
-					}
-				);
+				const cache = remoteFunctionCache(mockFn, () => arg, {
+					key: 'undefined-initial',
+					storage: 'memory',
+					initialValue: undefined
+				});
 
 				flushSync();
 
@@ -298,29 +266,25 @@ describe('remoteFunctionCache Integration Tests', () => {
 				let arg = $state('test');
 
 				// Test all storage types
-				const memoryCache = remoteFunctionCache(
-					mockFn,
-					() => arg,
-					{ key: 'memory-test', storage: 'memory' }
-				);
+				const memoryCache = remoteFunctionCache(mockFn, () => arg, {
+					key: 'memory-test',
+					storage: 'memory'
+				});
 
-				const localCache = remoteFunctionCache(
-					mockFn,
-					() => arg,
-					{ key: 'local-test', storage: 'local' }
-				);
+				const localCache = remoteFunctionCache(mockFn, () => arg, {
+					key: 'local-test',
+					storage: 'local'
+				});
 
-				const sessionCache = remoteFunctionCache(
-					mockFn,
-					() => arg,
-					{ key: 'session-test', storage: 'session' }
-				);
+				const sessionCache = remoteFunctionCache(mockFn, () => arg, {
+					key: 'session-test',
+					storage: 'session'
+				});
 
-				const indexeddbCache = remoteFunctionCache(
-					mockFn,
-					() => arg,
-					{ key: 'indexeddb-test', storage: 'indexeddb' }
-				);
+				const indexeddbCache = remoteFunctionCache(mockFn, () => arg, {
+					key: 'indexeddb-test',
+					storage: 'indexeddb'
+				});
 
 				flushSync();
 
@@ -338,16 +302,12 @@ describe('remoteFunctionCache Integration Tests', () => {
 		it('should handle destruction properly', () => {
 			const cleanup = $effect.root(() => {
 				const mockFn = vi.fn().mockReturnValue({ current: 'result' });
-				
+
 				let arg = $state('test');
-				const cache = remoteFunctionCache(
-					mockFn,
-					() => arg,
-					{
-						key: 'lifecycle-test',
-						storage: 'memory'
-					}
-				);
+				const cache = remoteFunctionCache(mockFn, () => arg, {
+					key: 'lifecycle-test',
+					storage: 'memory'
+				});
 
 				flushSync();
 
@@ -361,21 +321,17 @@ describe('remoteFunctionCache Integration Tests', () => {
 		it('should handle setValue after destruction gracefully', () => {
 			const cleanup = $effect.root(() => {
 				const mockFn = vi.fn().mockReturnValue({ current: 'result' });
-				
+
 				let arg = $state('test');
-				const cache = remoteFunctionCache(
-					mockFn,
-					() => arg,
-					{
-						key: 'destroyed-test',
-						storage: 'memory'
-					}
-				);
+				const cache = remoteFunctionCache(mockFn, () => arg, {
+					key: 'destroyed-test',
+					storage: 'memory'
+				});
 
 				flushSync();
 
 				cache.destroy();
-				
+
 				// Should not throw when using destroyed cache
 				expect(() => cache.setValue('new value')).not.toThrow();
 			});

@@ -24,9 +24,9 @@ describe('CustomPersistedState with Svelte runes', () => {
 		it('should initialize with initial value', () => {
 			const cleanup = $effect.root(() => {
 				const state = new CustomPersistedState('test-key', 'initial', mockProvider);
-				
+
 				flushSync();
-				
+
 				expect(state.current).toBe('initial');
 			});
 
@@ -38,12 +38,12 @@ describe('CustomPersistedState with Svelte runes', () => {
 
 			const cleanup = $effect.root(() => {
 				new CustomPersistedState('test-key', 'initial', mockProvider);
-				
+
 				flushSync();
 			});
 
 			// Wait for async storage load
-			await new Promise(resolve => setTimeout(resolve, 0));
+			await new Promise((resolve) => setTimeout(resolve, 0));
 
 			expect(mockProvider.get).toHaveBeenCalledWith('test-key');
 			cleanup();
@@ -52,9 +52,9 @@ describe('CustomPersistedState with Svelte runes', () => {
 		it('should save to storage when value changes', async () => {
 			const cleanup = $effect.root(() => {
 				const state = new CustomPersistedState('test-key', 'initial', mockProvider);
-				
+
 				flushSync();
-				
+
 				state.current = 'new-value';
 				flushSync();
 
@@ -67,10 +67,10 @@ describe('CustomPersistedState with Svelte runes', () => {
 		it('should not save when value is undefined', () => {
 			const cleanup = $effect.root(() => {
 				const state = new CustomPersistedState('test-key', 'initial', mockProvider);
-				
+
 				flushSync();
 				vi.clearAllMocks();
-				
+
 				state.current = undefined;
 				flushSync();
 
@@ -85,10 +85,10 @@ describe('CustomPersistedState with Svelte runes', () => {
 		it('should not trigger save for same primitive values', () => {
 			const cleanup = $effect.root(() => {
 				const state = new CustomPersistedState('test-key', 'initial', mockProvider);
-				
+
 				flushSync();
 				vi.clearAllMocks();
-				
+
 				// Set same value
 				state.current = 'initial';
 				flushSync();
@@ -108,10 +108,10 @@ describe('CustomPersistedState with Svelte runes', () => {
 
 			const cleanup = $effect.root(() => {
 				const state = new CustomPersistedState('test-key', { a: 1 }, mockObjectProvider);
-				
+
 				flushSync();
 				vi.clearAllMocks();
-				
+
 				// Set equivalent object
 				state.current = { a: 1 };
 				flushSync();
@@ -131,10 +131,10 @@ describe('CustomPersistedState with Svelte runes', () => {
 
 			const cleanup = $effect.root(() => {
 				const state = new CustomPersistedState('test-key', { a: 1 }, mockObjectProvider);
-				
+
 				flushSync();
 				vi.clearAllMocks();
-				
+
 				// Set different object
 				state.current = { a: 2 };
 				flushSync();
@@ -152,7 +152,7 @@ describe('CustomPersistedState with Svelte runes', () => {
 
 			const cleanup = $effect.root(() => {
 				const state = new CustomPersistedState('test-key', 'initial', mockProvider);
-				
+
 				flushSync();
 
 				expect(state.isLoading).toBe(true);
@@ -166,14 +166,14 @@ describe('CustomPersistedState with Svelte runes', () => {
 	describe('key management', () => {
 		it('should use composite key with uniquekey option', async () => {
 			const cleanup = $effect.root(() => {
-				new CustomPersistedState('base-key', 'initial', mockProvider, { 
-					uniquekey: 'unique' 
+				new CustomPersistedState('base-key', 'initial', mockProvider, {
+					uniquekey: 'unique'
 				});
-				
+
 				flushSync();
 			});
 
-			await new Promise(resolve => setTimeout(resolve, 0));
+			await new Promise((resolve) => setTimeout(resolve, 0));
 
 			expect(mockProvider.get).toHaveBeenCalledWith('base-key:unique');
 			cleanup();
@@ -182,15 +182,15 @@ describe('CustomPersistedState with Svelte runes', () => {
 		it('should handle newKey operation', async () => {
 			const cleanup = $effect.root(() => {
 				const state = new CustomPersistedState('old-key', 'initial', mockProvider);
-				
+
 				flushSync();
 				vi.clearAllMocks();
-				
+
 				state.newKey('new-key', 'new-initial');
 				flushSync();
 			});
 
-			await new Promise(resolve => setTimeout(resolve, 0));
+			await new Promise((resolve) => setTimeout(resolve, 0));
 
 			expect(mockProvider.get).toHaveBeenCalledWith('new-key');
 			cleanup();
@@ -199,11 +199,11 @@ describe('CustomPersistedState with Svelte runes', () => {
 		it('should retain value when requested in newKey', () => {
 			const cleanup = $effect.root(() => {
 				const state = new CustomPersistedState('old-key', 'initial', mockProvider);
-				
+
 				flushSync();
 				state.current = 'current-value';
 				flushSync();
-				
+
 				state.newKey('new-key', 'new-initial', true); // retain = true
 				flushSync();
 
@@ -219,11 +219,11 @@ describe('CustomPersistedState with Svelte runes', () => {
 		it('should reset to initial value and clear storage', async () => {
 			const cleanup = $effect.root(() => {
 				const state = new CustomPersistedState('test-key', 'initial', mockProvider);
-				
+
 				flushSync();
 				state.current = 'changed';
 				flushSync();
-				
+
 				// Test reset functionality
 				state.reset().then(() => {
 					expect(state.current).toBe('initial');
@@ -239,7 +239,7 @@ describe('CustomPersistedState with Svelte runes', () => {
 		it('should setup sync when provider supports it', () => {
 			const cleanup = $effect.root(() => {
 				new CustomPersistedState('test-key', 'initial', mockProvider);
-				
+
 				flushSync();
 
 				expect(mockProvider.setupSync).toHaveBeenCalled();
@@ -257,9 +257,9 @@ describe('CustomPersistedState with Svelte runes', () => {
 
 			const cleanup = $effect.root(() => {
 				const state = new CustomPersistedState('test-key', 'initial', mockProvider);
-				
+
 				flushSync();
-				
+
 				// Simulate sync from another tab
 				syncCallback!('synced-value');
 				flushSync();
@@ -279,9 +279,9 @@ describe('CustomPersistedState with Svelte runes', () => {
 
 			const cleanup = $effect.root(() => {
 				const state = new CustomPersistedState('test-key', 'initial', mockProvider);
-				
+
 				flushSync();
-				
+
 				// Simulate sync with null value
 				syncCallback!(null);
 				flushSync();
@@ -300,9 +300,9 @@ describe('CustomPersistedState with Svelte runes', () => {
 
 			const cleanup = $effect.root(() => {
 				const state = new CustomPersistedState('test-key', 'initial', mockProvider);
-				
+
 				flushSync();
-				
+
 				state.destroy();
 				flushSync();
 
@@ -318,9 +318,9 @@ describe('CustomPersistedState with Svelte runes', () => {
 
 			const cleanup = $effect.root(() => {
 				const state = new CustomPersistedState('test-key', 'initial', mockProvider);
-				
+
 				flushSync();
-				
+
 				state.destroy();
 				state.destroy(); // Second call should not throw
 				flushSync();
