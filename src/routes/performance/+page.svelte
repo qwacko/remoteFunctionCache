@@ -72,13 +72,15 @@
 		for (const size of testSizes) {
 			// First, populate some caches with data by calling refresh() on a subset
 			const selectedCaches = loadTestCaches.slice(0, size);
-			await Promise.all(selectedCaches.map(cache => {
-				// Populate cache by triggering initial load
-				return new Promise(resolve => {
-					// Give it a moment to load
-					setTimeout(resolve, 20);
-				});
-			}));
+			await Promise.all(
+				selectedCaches.map((cache) => {
+					// Populate cache by triggering initial load
+					return new Promise((resolve) => {
+						// Give it a moment to load
+						setTimeout(resolve, 20);
+					});
+				})
+			);
 
 			// Test uncached requests (direct function calls)
 			const uncachedStart = performance.now();
@@ -89,13 +91,13 @@
 
 			// Test cached requests (access pre-loaded cache data)
 			const cachedStart = performance.now();
-			
+
 			// Access cached values (should be instantaneous)
-			const cachedValues = selectedCaches.map(cache => {
+			const cachedValues = selectedCaches.map((cache) => {
 				// This simulates accessing cached data
 				return cache.value?.current || 'no-cache';
 			});
-			
+
 			const cachedEnd = performance.now();
 			const cachedTime = cachedEnd - cachedStart;
 
