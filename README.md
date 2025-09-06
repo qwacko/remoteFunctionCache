@@ -12,6 +12,8 @@ A powerful caching library for SvelteKit's remote functions that provides intell
 - 🎯 **Loading States**: Built-in loading, error, and refreshing states
 - 🔧 **Manual Control**: Programmatic cache management and refresh capabilities
 - 📊 **Type Safe**: Full TypeScript support with proper type inference
+- 🔄 **Auto-Sync**: Automatically syncs with SvelteKit invalidations and mutations
+- 🐛 **Debug Mode**: Optional debug logging for development and troubleshooting
 
 ## Installation
 
@@ -53,7 +55,8 @@ export default config;
 		key: 'users-list',
 		storage: 'local',
 		timeoutMinutes: 10,
-		syncTabs: true
+		syncTabs: true,
+		autoSync: true  // Enable automatic sync with SvelteKit
 	});
 </script>
 
@@ -95,6 +98,8 @@ Creates a cached version of a remote function.
 	syncTabs?: boolean;        // Enable cross-tab synchronization
 	timeoutMinutes?: number | null;  // Cache expiration (null = no expiry)
 	initialValue?: TReturn;    // Initial value before first load
+	autoSync?: boolean;        // Enable automatic sync with SvelteKit invalidations (default: true)
+	debug?: boolean;          // Enable debug logging (default: false)
 }
 ```
 
@@ -107,8 +112,10 @@ Creates a cached version of a remote function.
 	error: any;               // Last error that occurred
 	value: CustomPersistedState<TReturn>;  // Cached value container
 	updateTime: Date;         // Last update timestamp
+	autoSync: boolean;        // Current auto-sync setting
 	refresh: () => void;      // Force refresh from server
 	setValue: (val: TReturn) => void;  // Set cache value manually
+	destroy: () => void;      // Clean up the cache instance
 }
 ```
 
@@ -163,7 +170,8 @@ Creates a cached version of a remote function.
 		key: 'shared-data',
 		storage: 'local',
 		syncTabs: true,
-		timeoutMinutes: 60
+		timeoutMinutes: 60,
+		autoSync: true
 	});
 </script>
 ```
@@ -176,7 +184,8 @@ Creates a cached version of a remote function.
 		key: 'large-dataset',
 		storage: 'indexeddb',
 		syncTabs: true,
-		timeoutMinutes: null // Never expires
+		timeoutMinutes: null, // Never expires
+		autoSync: true
 	});
 </script>
 ```
@@ -196,6 +205,11 @@ Creates a cached version of a remote function.
 	const forceRefresh = () => {
 		usersCache.refresh();
 	};
+
+	// Clean up when component is destroyed
+	const cleanup = () => {
+		usersCache.destroy();
+	};
 </script>
 ```
 
@@ -210,7 +224,7 @@ Creates a cached version of a remote function.
 
 ### sessionStorage
 - ⚠️ Cleared when tab/browser closes
-- ❌ No cross-tab synchronization
+- ❌ No cross-tab synchronization (automatically upgrades to localStorage if syncTabs is enabled)
 - ⚠️ ~5-10MB storage limit
 - ⚠️ Synchronous API (may block UI)
 - ⚠️ String-only storage (JSON serialization)
