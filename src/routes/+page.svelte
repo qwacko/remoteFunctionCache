@@ -22,7 +22,7 @@
 		storage: 'local',
 		timeoutMinutes: 10,
 		autoSync: true, // ✨ Enable SvelteKit auto-invalidation sync
-		debug: false // Set to true to enable debug logging
+		debug: true // Set to true to enable debug logging
 	});
 
 	// Time cache for demonstrating expiry
@@ -36,7 +36,6 @@
 		key: 'random-number',
 		timeoutMinutes: null // No expiry
 	});
-
 </script>
 
 <h1>Remote Function Cache - Basic Usage</h1>
@@ -57,7 +56,8 @@
 			all caches automatically refresh!
 		</li>
 		<li>
-			🐛 <strong>Optional debug logging</strong> - set <code>debug: true</code> in cache options to see internal operations
+			🐛 <strong>Optional debug logging</strong> - set <code>debug: true</code> in cache options to see
+			internal operations
 		</li>
 	</ul>
 

@@ -138,7 +138,10 @@ export function remoteFunctionCache<TArg, TReturn>(
 			if (prevArgToKey !== currentKey) {
 				prevArgToKey = currentKey;
 				state.newKey(`${functionKey}-${currentKey}`, initialValue);
-				refresh();
+				
+				// For synchronous storage (localStorage/sessionStorage), delay refresh slightly 
+				// to allow loadFromStorage to complete
+				setTimeout(() => refresh(), 0);
 			}
 		});
 	});
