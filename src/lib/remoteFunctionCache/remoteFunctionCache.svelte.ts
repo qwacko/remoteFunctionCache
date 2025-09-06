@@ -92,15 +92,28 @@ export function remoteFunctionCache<TArg, TReturn>(
 				}
 
 				let result;
+				let queryPromise;
+				if (latestArgs !== undefined) {
+					queryPromise = fn(latestArgs);
+				} else {
+					// When args are undefined, we need to handle this case properly
+					// Since the function signature expects TArg, we pass the current arg value
+					const currentArg = arg();
+					if (currentArg !== undefined) {
+						queryPromise = fn(currentArg);
+					} else {
+						// This shouldn't happen in normal usage, but handle gracefully
+						throw new Error('Cannot call function with undefined arguments');
+					}
+				}
+
 				if (callFunction) {
 					debugLog('Calling function with forced refresh');
 					// Force refresh the remote function cache first
-					const queryPromise = latestArgs === undefined ? fn() : fn(latestArgs);
 					await queryPromise.refresh();
 					result = await queryPromise;
 				} else {
 					debugLog('Calling function normally');
-					const queryPromise = latestArgs === undefined ? fn() : fn(latestArgs);
 					result = await queryPromise;
 				}
 				debugLog('Function result:', result);

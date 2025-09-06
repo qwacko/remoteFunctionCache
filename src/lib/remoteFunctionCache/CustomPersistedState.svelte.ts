@@ -20,7 +20,7 @@ function isEqual<T>(a: T, b: T): boolean {
 const instanceRegistry = new Map<string, Set<CustomPersistedState<any>>>();
 
 export class CustomPersistedState<DataType extends any> {
-	#current = $state<DataType>();
+	#current = $state<DataType | undefined>();
 	private isUpdating = false;
 	private storageCleanup?: () => void;
 	private key: string;
@@ -43,18 +43,20 @@ export class CustomPersistedState<DataType extends any> {
 		this.loadFromStorage();
 	}
 
-	get current(): DataType {
+	get current(): DataType | undefined {
 		return this.#current;
 	}
 
-	set current(value: DataType) {
+	set current(value: DataType | undefined) {
 		// Efficient equality check with fast path for primitives
 		const hasChanged = !this.isUpdating && !isEqual(value, this.#current);
 		
 		if (hasChanged) {
 			this.#current = value;
-			this.saveToStorage(value);
-			this.syncOtherInstances(value);
+			if (value !== undefined) {
+				this.saveToStorage(value);
+				this.syncOtherInstances(value);
+			}
 		} else {
 			this.#current = value;
 		}
@@ -122,7 +124,7 @@ export class CustomPersistedState<DataType extends any> {
 		
 		// Set up cross-tab synchronization if supported by the provider
 		if (this.storageProvider.setupSync) {
-			this.storageCleanup = this.storageProvider.setupSync(compositeKey, (value) => {
+			const cleanup = this.storageProvider.setupSync(compositeKey, (value) => {
 				if (!this.isUpdating && value !== null) {
 					this.isUpdating = true;
 					this.#current = value;
@@ -130,6 +132,9 @@ export class CustomPersistedState<DataType extends any> {
 					this.syncOtherInstances(value);
 				}
 			});
+			if (cleanup) {
+				this.storageCleanup = cleanup;
+			}
 		}
 	}
 
@@ -162,7 +167,9 @@ export class CustomPersistedState<DataType extends any> {
 		this.loadFromStorage();
 
 		// Sync other instances with the same new key
-		this.syncOtherInstances(this.current);
+		if (this.current !== undefined) {
+			this.syncOtherInstances(this.current);
+		}
 	}
 
 	async reset(): Promise<void> {
