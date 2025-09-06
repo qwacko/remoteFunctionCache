@@ -230,7 +230,7 @@
 					</tr>
 				</thead>
 				<tbody>
-					{#each loadTestResults as result}
+					{#each loadTestResults as result (result)}
 						<tr style="border-bottom: 1px solid #f1f5f9;">
 							<td style="padding: 0.5rem; font-weight: 500;">{result.requests}</td>
 							<td style="padding: 0.5rem;">{result.uncachedTime}</td>

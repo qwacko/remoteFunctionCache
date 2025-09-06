@@ -93,7 +93,7 @@ export class LocalStorageProvider<T> implements StorageProvider<T> {
 
 	private isStoredData(data: unknown): data is StoredData<T> {
 		return (
-			data &&
+			!!data &&
 			typeof data === 'object' &&
 			'timestamp' in data &&
 			'value' in data &&
