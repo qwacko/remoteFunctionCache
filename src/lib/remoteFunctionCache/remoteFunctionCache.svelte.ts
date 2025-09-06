@@ -16,7 +16,8 @@ export function remoteFunctionCache<TArg, TReturn>(
 		storage = 'local',
 		syncTabs = true,
 		timeoutMinutes,
-		autoSync = true
+		autoSync = true,
+		debug = false
 	}: {
 		initialValue?: TReturn | undefined;
 		key?: string;
@@ -24,9 +25,17 @@ export function remoteFunctionCache<TArg, TReturn>(
 		syncTabs?: boolean;
 		timeoutMinutes?: number | null;
 		autoSync?: boolean;
+		debug?: boolean;
 	} = {}
 ) {
 	const functionKey = key || fn.name || 'anonymous';
+	
+	// Debug logging helper
+	const debugLog = (message: string, ...args: any[]) => {
+		if (debug) {
+			console.log(`[${functionKey}] ${message}`, ...args);
+		}
+	};
 
 	// Force localStorage when syncTabs is enabled and storage is sessionStorage
 	const effectiveStorage: StorageType = syncTabs && storage === 'session' ? 'local' : storage;
@@ -57,10 +66,7 @@ export function remoteFunctionCache<TArg, TReturn>(
 	const refresh = (callFunction: boolean = false) => {
 		const latestArgs = arg();
 
-		console.log(
-			`[${functionKey}] refresh() called with callFunction=${callFunction}, args:`,
-			latestArgs
-		);
+		debugLog(`refresh() called with callFunction=${callFunction}, args:`, latestArgs);
 
 		refreshingInternal = true;
 		// Clear any previous error at the start of a new request
@@ -98,19 +104,19 @@ export function remoteFunctionCache<TArg, TReturn>(
 
 				let result;
 				if (callFunction) {
-					console.log(`[${functionKey}] Calling function with forced refresh`);
+					debugLog('Calling function with forced refresh');
 					// Force refresh the remote function cache first
 					const queryPromise = latestArgs === undefined ? fn() : fn(latestArgs);
 					await queryPromise.refresh();
 					result = await queryPromise;
 				} else {
-					console.log(`[${functionKey}] Calling function normally`);
+					debugLog('Calling function normally');
 					const queryPromise = latestArgs === undefined ? fn() : fn(latestArgs);
 					result = await queryPromise;
 				}
-				console.log(`[${functionKey}] Function result:`, result);
+				debugLog('Function result:', result);
 				state.current = result;
-				console.log(`[${functionKey}] State updated to:`, state.current);
+				debugLog('State updated to:', state.current);
 				error = undefined;
 			} catch (err) {
 				error = err;
@@ -140,13 +146,13 @@ export function remoteFunctionCache<TArg, TReturn>(
 	// Auto-sync: Monitor remote function for SvelteKit invalidation changes
 	$effect(() => {
 		if (!autoSync) {
-			console.log(`[${functionKey}] Auto-sync disabled`);
+			debugLog('Auto-sync disabled');
 			return;
 		}
 
 		// This reactive effect will trigger whenever SvelteKit invalidates the remote function
 		const currentRemoteValue = monitorRemoteValue;
-		console.log(`[${functionKey}] Remote function value changed:`, currentRemoteValue);
+		debugLog('Remote function value changed:', currentRemoteValue);
 
 		// Only update cache if we have a value and it's different from our current cache
 		if (currentRemoteValue !== undefined) {
@@ -155,18 +161,18 @@ export function remoteFunctionCache<TArg, TReturn>(
 			const cacheValueString = JSON.stringify(currentCacheValue);
 
 			if (remoteValueString !== cacheValueString) {
-				console.log(`[${functionKey}] Auto-sync: Updating cache with fresh data from SvelteKit`);
-				console.log(`[${functionKey}] Cached:`, currentCacheValue);
-				console.log(`[${functionKey}] Remote:`, currentRemoteValue);
+				debugLog('Auto-sync: Updating cache with fresh data from SvelteKit');
+				debugLog('Cached:', currentCacheValue);
+				debugLog('Remote:', currentRemoteValue);
 
 				// Update our cache with the fresh data from SvelteKit
 				state.current = currentRemoteValue;
 				updateTime = new Date();
 				error = undefined;
 
-				console.log(`[${functionKey}] Auto-sync: Cache updated successfully`);
+				debugLog('Auto-sync: Cache updated successfully');
 			} else {
-				console.log(`[${functionKey}] Auto-sync: Remote value same as cache, no update needed`);
+				debugLog('Auto-sync: Remote value same as cache, no update needed');
 			}
 		}
 	});

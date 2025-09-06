@@ -1,9 +1,6 @@
 <script lang="ts">
 	import { remoteFunctionCache } from '../lib/index.js';
 	import { getPosts, getPost, addLike, getCurrentTime, getRandomNumber } from './data.remote.js';
-	
-	// Debug logging for form submissions
-	console.log('addLike form object:', addLike);
 
 	let selectedPostId = $state(1);
 	let cacheKey = $state('demo-posts');
@@ -15,7 +12,8 @@
 		key: 'posts-list',
 		storage: 'local',
 		timeoutMinutes: 10,
-		autoSync: true // ✨ Enable SvelteKit auto-invalidation sync
+		autoSync: true, // ✨ Enable SvelteKit auto-invalidation sync
+		debug: false // Set to true to enable debug logging
 	});
 
 	// Cached single post query with arguments and auto-sync
@@ -23,7 +21,8 @@
 		key: 'single-post',
 		storage: 'local',
 		timeoutMinutes: 10,
-		autoSync: true // ✨ Enable SvelteKit auto-invalidation sync
+		autoSync: true, // ✨ Enable SvelteKit auto-invalidation sync
+		debug: false // Set to true to enable debug logging
 	});
 
 	// Time cache for demonstrating expiry
@@ -56,6 +55,9 @@
 		<li>
 			🆕 <strong>Auto-syncs with SvelteKit mutations</strong> - when you update data via remote functions,
 			all caches automatically refresh!
+		</li>
+		<li>
+			🐛 <strong>Optional debug logging</strong> - set <code>debug: true</code> in cache options to see internal operations
 		</li>
 	</ul>
 
@@ -131,15 +133,7 @@
 						<span class="text-sm text-gray-600">❤️ {post.likes} likes</span>
 						<div class="flex gap-2">
 							<button class="btn" onclick={() => (selectedPostId = post.id)}> Select </button>
-							<form {...addLike.enhance(async ({ form, data, submit }) => {
-								console.log('Form submission started for post:', data.get('postId'));
-								try {
-									const result = await submit();
-									console.log('Form submission completed, result:', result);
-								} catch (error) {
-									console.error('Form submission error:', error);
-								}
-							})} style="display: inline;">
+							<form {...addLike} style="display: inline;">
 								<input type="hidden" name="postId" value={post.id} />
 								<button class="btn btn-secondary" type="submit"> Like </button>
 							</form>
@@ -176,15 +170,7 @@
 				<span class="text-sm text-gray-600">❤️ {postCache.value.current.likes} likes</span>
 				<div class="flex gap-2">
 					<button class="btn" onclick={() => postCache.refresh()}> Refresh </button>
-					<form {...addLike.enhance(async ({ form, data, submit }) => {
-						console.log('Single post form submission started for post:', data.get('postId'));
-						try {
-							const result = await submit();
-							console.log('Single post form submission completed, result:', result);
-						} catch (error) {
-							console.error('Single post form submission error:', error);
-						}
-					})} style="display: inline;">
+					<form {...addLike} style="display: inline;">
 						<input type="hidden" name="postId" value={postCache.value.current.id} />
 						<button class="btn btn-secondary" type="submit"> Like </button>
 					</form>
