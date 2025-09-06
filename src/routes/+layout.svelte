@@ -1,3 +1,25 @@
+<script>
+	import { page } from '$app/stores';
+</script>
+
+<nav>
+	<h1>Remote Function Cache Demo</h1>
+	<ul>
+		<li><a href="/" class:active={$page.route.id === '/'}>Basic Usage</a></li>
+		<li><a href="/advanced" class:active={$page.route.id === '/advanced'}>Advanced Features</a></li>
+		<li>
+			<a href="/storage-comparison" class:active={$page.route.id === '/storage-comparison'}
+				>Storage Comparison</a
+			>
+		</li>
+		<li><a href="/performance" class:active={$page.route.id === '/performance'}>Performance</a></li>
+	</ul>
+</nav>
+
+<main>
+	<slot />
+</main>
+
 <style>
 	:global(body) {
 		font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -138,7 +160,9 @@
 		border: 1px solid #d1d5db;
 		border-radius: 6px;
 		font-size: 0.875rem;
-		transition: border-color 0.2s, box-shadow 0.2s;
+		transition:
+			border-color 0.2s,
+			box-shadow 0.2s;
 	}
 
 	:global(input:focus, textarea:focus, select:focus) {
@@ -167,8 +191,12 @@
 	}
 
 	@keyframes spin {
-		0% { transform: rotate(0deg); }
-		100% { transform: rotate(360deg); }
+		0% {
+			transform: rotate(0deg);
+		}
+		100% {
+			transform: rotate(360deg);
+		}
 	}
 
 	:global(.status) {
@@ -264,21 +292,3 @@
 		margin-top: 1rem;
 	}
 </style>
-
-<nav>
-	<h1>Remote Function Cache Demo</h1>
-	<ul>
-		<li><a href="/" class:active={$page.route.id === '/'}>Basic Usage</a></li>
-		<li><a href="/advanced" class:active={$page.route.id === '/advanced'}>Advanced Features</a></li>
-		<li><a href="/storage-comparison" class:active={$page.route.id === '/storage-comparison'}>Storage Comparison</a></li>
-		<li><a href="/performance" class:active={$page.route.id === '/performance'}>Performance</a></li>
-	</ul>
-</nav>
-
-<main>
-	<slot />
-</main>
-
-<script>
-	import { page } from '$app/stores';
-</script>

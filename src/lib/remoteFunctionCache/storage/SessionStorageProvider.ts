@@ -69,11 +69,13 @@ export class SessionStorageProvider<T> implements StorageProvider<T> {
 	}
 
 	private isStoredData(data: any): data is StoredData<T> {
-		return data && 
-			typeof data === 'object' && 
-			'timestamp' in data && 
+		return (
+			data &&
+			typeof data === 'object' &&
+			'timestamp' in data &&
 			'value' in data &&
-			typeof data.timestamp === 'number';
+			typeof data.timestamp === 'number'
+		);
 	}
 
 	private isDataExpired(timestamp: number): boolean {

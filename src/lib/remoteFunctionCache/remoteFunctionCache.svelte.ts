@@ -29,7 +29,7 @@ export function remoteFunctionCache<TArg, TReturn>(
 	} = {}
 ) {
 	const functionKey = key || fn.name || 'anonymous';
-	
+
 	// Debug logging helper
 	const debugLog = (message: string, ...args: any[]) => {
 		if (debug) {
@@ -55,7 +55,7 @@ export function remoteFunctionCache<TArg, TReturn>(
 
 	// Unified state management
 	let loadingInternal = $state(true);
-	let refreshingInternal = $state(false); 
+	let refreshingInternal = $state(false);
 	let error = $state<any>();
 	let updateTime = $state<Date>(new Date());
 	let prevArgToKey = $state<string | undefined>(null as any);
@@ -73,7 +73,7 @@ export function remoteFunctionCache<TArg, TReturn>(
 		const hasCache = state.current !== undefined;
 		refreshingInternal = true;
 		loadingInternal = !hasCache; // Only show loading spinner if no cached data
-		
+
 		// Clear any previous error at the start of a new request
 		error = undefined;
 
@@ -81,7 +81,7 @@ export function remoteFunctionCache<TArg, TReturn>(
 			try {
 				// If using async storage (IndexedDB), wait for loading to complete
 				while (state.isLoading) {
-					await new Promise(resolve => setTimeout(resolve, 10));
+					await new Promise((resolve) => setTimeout(resolve, 10));
 				}
 
 				// If we now have data from cache, don't make a network request unless forced
@@ -142,7 +142,7 @@ export function remoteFunctionCache<TArg, TReturn>(
 				// Retain the previous value to avoid flashing during cache load
 				const shouldRetainValue = state.current !== undefined;
 				state.newKey(`${functionKey}-${currentKey}`, initialValue, shouldRetainValue);
-				
+
 				// Use a proper coordination mechanism instead of setTimeout
 				refresh();
 			}

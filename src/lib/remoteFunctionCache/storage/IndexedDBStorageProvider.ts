@@ -23,10 +23,10 @@ export class IndexedDBStorageProvider<T> implements StorageProvider<T> {
 
 			return new Promise((resolve) => {
 				const request = store.get(key);
-				
+
 				request.onsuccess = () => {
 					this.isLoadingData = false;
-					
+
 					if (request.result === undefined) {
 						resolve(null);
 						return;
@@ -76,13 +76,13 @@ export class IndexedDBStorageProvider<T> implements StorageProvider<T> {
 			const transaction = db.transaction([this.STORE_NAME], 'readwrite');
 			const store = transaction.objectStore(this.STORE_NAME);
 			const serialize = this.options.serialize ?? JSON.stringify;
-			
+
 			const dataToStore = this.wrapData(value);
 			const serializedData = serialize(dataToStore);
 
 			return new Promise((resolve, reject) => {
 				const request = store.put(serializedData, key);
-				
+
 				request.onsuccess = () => {
 					// Broadcast changes for cross-tab sync
 					if (this.broadcastChannel) {
@@ -114,7 +114,7 @@ export class IndexedDBStorageProvider<T> implements StorageProvider<T> {
 
 			return new Promise((resolve) => {
 				const request = store.delete(key);
-				
+
 				request.onsuccess = () => resolve();
 				request.onerror = () => {
 					console.warn(`Failed to remove from IndexedDB for key "${key}":`, request.error);
@@ -201,11 +201,13 @@ export class IndexedDBStorageProvider<T> implements StorageProvider<T> {
 	}
 
 	private isStoredData(data: any): data is StoredData<T> {
-		return data && 
-			typeof data === 'object' && 
-			'timestamp' in data && 
+		return (
+			data &&
+			typeof data === 'object' &&
+			'timestamp' in data &&
 			'value' in data &&
-			typeof data.timestamp === 'number';
+			typeof data.timestamp === 'number'
+		);
 	}
 
 	private isDataExpired(timestamp: number): boolean {
