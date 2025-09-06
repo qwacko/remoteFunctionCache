@@ -117,7 +117,10 @@ export class CustomPersistedState<DataType extends any> {
 		}
 	}
 
-	newKey(key: string, newInitialValue?: DataType): void {
+	newKey(key: string, newInitialValue?: DataType, retainValue: boolean = false): void {
+		// Store current value if we want to retain it
+		const valueToRetain = retainValue ? this.#current : undefined;
+		
 		// Clean up current setup
 		this.unregisterInstance();
 		if (this.storageCleanup) {
@@ -130,8 +133,14 @@ export class CustomPersistedState<DataType extends any> {
 			this.initialValue = newInitialValue;
 		}
 
-		// Setup with new key
-		this.#current = this.initialValue;
+		// Setup with new key - retain previous value if requested
+		if (retainValue && valueToRetain !== undefined) {
+			// Keep the current value while we load from storage
+			// loadFromStorage will overwrite if cache data exists
+		} else {
+			this.#current = this.initialValue;
+		}
+		
 		this.registerInstance();
 		this.setupSync();
 		this.loadFromStorage();

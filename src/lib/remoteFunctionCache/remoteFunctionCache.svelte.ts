@@ -137,7 +137,9 @@ export function remoteFunctionCache<TArg, TReturn>(
 			const currentKey = argToKey(arg());
 			if (prevArgToKey !== currentKey) {
 				prevArgToKey = currentKey;
-				state.newKey(`${functionKey}-${currentKey}`, initialValue);
+				// Retain the previous value to avoid flashing during cache load
+				const shouldRetainValue = state.current !== undefined;
+				state.newKey(`${functionKey}-${currentKey}`, initialValue, shouldRetainValue);
 				
 				// For synchronous storage (localStorage/sessionStorage), delay refresh slightly 
 				// to allow loadFromStorage to complete
