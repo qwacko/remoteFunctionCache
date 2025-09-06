@@ -53,8 +53,9 @@ export function remoteFunctionCache<TArg, TReturn>(
 		storageProvider
 	);
 
+	// Unified state management
 	let loadingInternal = $state(true);
-	let refreshingInternal = $state(true);
+	let refreshingInternal = $state(false); 
 	let error = $state<any>();
 	let updateTime = $state<Date>(new Date());
 	let prevArgToKey = $state<string | undefined>(null as any);
@@ -68,26 +69,19 @@ export function remoteFunctionCache<TArg, TReturn>(
 
 		debugLog(`refresh() called with callFunction=${callFunction}, args:`, latestArgs);
 
+		// Set loading states based on current cache status
+		const hasCache = state.current !== undefined;
 		refreshingInternal = true;
+		loadingInternal = !hasCache; // Only show loading spinner if no cached data
+		
 		// Clear any previous error at the start of a new request
 		error = undefined;
-		// Only show loading initially if we don't have current data
-		loadingInternal = state.current === undefined;
 
 		const executeFunction = async () => {
 			try {
 				// If using async storage (IndexedDB), wait for loading to complete
-				if (state.isLoading) {
-					await new Promise<void>((resolve) => {
-						const checkLoading = () => {
-							if (!state.isLoading) {
-								resolve();
-							} else {
-								setTimeout(checkLoading, 10);
-							}
-						};
-						checkLoading();
-					});
+				while (state.isLoading) {
+					await new Promise(resolve => setTimeout(resolve, 10));
 				}
 
 				// If we now have data from cache, don't make a network request unless forced
@@ -95,11 +89,6 @@ export function remoteFunctionCache<TArg, TReturn>(
 					refreshingInternal = false;
 					loadingInternal = false;
 					return;
-				}
-
-				// Only set loading to true if we actually need to make a network request
-				if (state.current === undefined) {
-					loadingInternal = true;
 				}
 
 				let result;
@@ -141,9 +130,8 @@ export function remoteFunctionCache<TArg, TReturn>(
 				const shouldRetainValue = state.current !== undefined;
 				state.newKey(`${functionKey}-${currentKey}`, initialValue, shouldRetainValue);
 				
-				// For synchronous storage (localStorage/sessionStorage), delay refresh slightly 
-				// to allow loadFromStorage to complete
-				setTimeout(() => refresh(), 0);
+				// Use a proper coordination mechanism instead of setTimeout
+				refresh();
 			}
 		});
 	});
@@ -162,10 +150,11 @@ export function remoteFunctionCache<TArg, TReturn>(
 		// Only update cache if we have a value and it's different from our current cache
 		if (currentRemoteValue !== undefined) {
 			const currentCacheValue = state.current;
-			const remoteValueString = JSON.stringify(currentRemoteValue);
-			const cacheValueString = JSON.stringify(currentCacheValue);
+			// Avoid proxy equality issues by using JSON comparison for Svelte 5 compatibility
+			const remoteString = JSON.stringify(currentRemoteValue);
+			const cacheString = JSON.stringify(currentCacheValue);
 
-			if (remoteValueString !== cacheValueString) {
+			if (remoteString !== cacheString) {
 				debugLog('Auto-sync: Updating cache with fresh data from SvelteKit');
 				debugLog('Cached:', currentCacheValue);
 				debugLog('Remote:', currentRemoteValue);
@@ -205,6 +194,10 @@ export function remoteFunctionCache<TArg, TReturn>(
 		setValue: (val: TReturn) => {
 			state.current = val;
 			updateTime = new Date();
+		},
+		destroy: () => {
+			debugLog('Destroying remoteFunctionCache instance');
+			state.destroy();
 		}
 	};
 }

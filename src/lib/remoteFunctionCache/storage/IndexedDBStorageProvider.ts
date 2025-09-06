@@ -133,6 +133,11 @@ export class IndexedDBStorageProvider<T> implements StorageProvider<T> {
 	setupSync(key: string, callback: (value: T | null) => void): () => void {
 		if (typeof window === 'undefined') return () => {};
 
+		// Clean up existing channel if any
+		if (this.broadcastChannel) {
+			this.broadcastChannel.close();
+		}
+
 		// Use BroadcastChannel for IndexedDB cross-tab sync
 		const channelName = `CustomPersistedState-${key}`;
 		this.broadcastChannel = new BroadcastChannel(channelName);

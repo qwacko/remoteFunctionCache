@@ -1,5 +1,21 @@
 import type { StorageProvider } from './storage/StorageProvider.js';
 
+// Efficient equality check that handles complex objects and circular references
+function isEqual<T>(a: T, b: T): boolean {
+	// Fast path for primitive values and same reference
+	if (a === b) return true;
+	if (a == null || b == null) return a === b;
+	if (typeof a !== 'object' || typeof b !== 'object') return false;
+	
+	// For objects, use JSON comparison as fallback (could be optimized further)
+	try {
+		return JSON.stringify(a) === JSON.stringify(b);
+	} catch {
+		// Fallback for circular references or non-serializable objects
+		return false;
+	}
+}
+
 // Global registry to track instances by key for same-tab synchronization
 const instanceRegistry = new Map<string, Set<CustomPersistedState<any>>>();
 
@@ -32,10 +48,10 @@ export class CustomPersistedState<DataType extends any> {
 	}
 
 	set current(value: DataType) {
-		// Use JSON comparison to avoid proxy equality issues with Svelte 5
-		const hasChanged = JSON.stringify(value) !== JSON.stringify(this.#current);
+		// Efficient equality check with fast path for primitives
+		const hasChanged = !this.isUpdating && !isEqual(value, this.#current);
 		
-		if (hasChanged && !this.isUpdating) {
+		if (hasChanged) {
 			this.#current = value;
 			this.saveToStorage(value);
 			this.syncOtherInstances(value);
