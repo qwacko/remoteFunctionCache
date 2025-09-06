@@ -32,7 +32,10 @@ export class CustomPersistedState<DataType extends any> {
 	}
 
 	set current(value: DataType) {
-		if (value !== this.#current && !this.isUpdating) {
+		// Use JSON comparison to avoid proxy equality issues with Svelte 5
+		const hasChanged = JSON.stringify(value) !== JSON.stringify(this.#current);
+		
+		if (hasChanged && !this.isUpdating) {
 			this.#current = value;
 			this.saveToStorage(value);
 			this.syncOtherInstances(value);
