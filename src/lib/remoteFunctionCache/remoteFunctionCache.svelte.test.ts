@@ -46,7 +46,7 @@ describe('remoteFunctionCache with Svelte runes', () => {
 
 			const cache = remoteFunctionCache(mockFn, mockArgs, {
 				key: 'test-cache',
-				storage: 'local' // Use memory to avoid localStorage complications
+				storage: 'memory' // Use memory to avoid localStorage complications
 			});
 
 			flushSync();
@@ -71,7 +71,7 @@ describe('remoteFunctionCache with Svelte runes', () => {
 
 			const cache = remoteFunctionCache(mockFn, mockArgs, {
 				key: 'test-cache',
-				storage: 'local'
+				storage: 'memory'
 			});
 
 			flushSync();
@@ -97,7 +97,7 @@ describe('remoteFunctionCache with Svelte runes', () => {
 
 			const cache = remoteFunctionCache(mockFn, mockArgs, {
 				key: 'test-cache',
-				storage: 'local'
+				storage: 'memory'
 			});
 
 			flushSync();
@@ -126,7 +126,7 @@ describe('remoteFunctionCache with Svelte runes', () => {
 			// Test with timeout
 			const cache = remoteFunctionCache(mockFn, mockArgs, {
 				key: 'test-cache',
-				storage: 'local',
+				storage: 'memory',
 				timeoutMinutes: 30
 			});
 
@@ -151,7 +151,7 @@ describe('remoteFunctionCache with Svelte runes', () => {
 
 			const cache = remoteFunctionCache(mockFn, mockArgs, {
 				key: 'test-cache',
-				storage: 'local',
+				storage: 'memory',
 				debug: true
 			});
 
@@ -175,7 +175,7 @@ describe('remoteFunctionCache with Svelte runes', () => {
 
 			const cache = remoteFunctionCache(mockFn, mockArgs, {
 				key: 'test-cache',
-				storage: 'local',
+				storage: 'memory',
 				initialValue: 'initial data'
 			});
 
@@ -200,7 +200,7 @@ describe('remoteFunctionCache with Svelte runes', () => {
 
 			const cache = remoteFunctionCache(mockFn, mockArgs, {
 				key: 'test-cache',
-				storage: 'local'
+				storage: 'memory'
 			});
 
 			flushSync();
@@ -229,7 +229,7 @@ describe('remoteFunctionCache with Svelte runes', () => {
 			// Test local storage
 			const localCache = remoteFunctionCache(mockFn, mockArgs, {
 				key: 'test-cache',
-				storage: 'local'
+				storage: 'memory'
 			});
 
 			flushSync();
@@ -281,7 +281,7 @@ describe('remoteFunctionCache with Svelte runes', () => {
 
 			const cache = remoteFunctionCache(mockFn, mockArgs, {
 				key: 'test-cache',
-				storage: 'local'
+				storage: 'memory'
 			});
 
 			flushSync();
