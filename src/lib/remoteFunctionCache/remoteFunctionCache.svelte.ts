@@ -4,8 +4,9 @@ import { untrack } from 'svelte';
 
 import { CustomPersistedState } from './CustomPersistedState.svelte.js';
 import { createStorageProvider, type StorageType } from './storage/StorageFactory.js';
+import { SvelteDate } from 'svelte/reactivity';
 
-const argToKey = (arg: any) => JSON.stringify(arg);
+const argToKey = (arg: unknown) => JSON.stringify(arg);
 
 export function remoteFunctionCache<TArg, TReturn>(
 	fn: RemoteQueryFunction<TArg, TReturn>,
@@ -31,7 +32,7 @@ export function remoteFunctionCache<TArg, TReturn>(
 	const functionKey = key || fn.name || 'anonymous';
 
 	// Debug logging helper
-	const debugLog = (message: string, ...args: any[]) => {
+	const debugLog = (message: string, ...args: unknown[]) => {
 		if (debug) {
 			console.log(`[${functionKey}] ${message}`, ...args);
 		}
@@ -47,7 +48,7 @@ export function remoteFunctionCache<TArg, TReturn>(
 		deserialize: (val) => devalue.parse(val) as TReturn
 	});
 
-	let state = new CustomPersistedState<TReturn | undefined>(
+	const state = new CustomPersistedState<TReturn | undefined>(
 		`${functionKey}-${argToKey(arg())}`,
 		initialValue,
 		storageProvider
@@ -56,9 +57,9 @@ export function remoteFunctionCache<TArg, TReturn>(
 	// Unified state management
 	let loadingInternal = $state(true);
 	let refreshingInternal = $state(false);
-	let error = $state<any>();
-	let updateTime = $state<Date>(new Date());
-	let prevArgToKey = $state<string | undefined>(null as any);
+	let error = $state<Error | undefined>();
+	let updateTime = new SvelteDate();
+	let prevArgToKey = $state<string | undefined>(undefined);
 
 	// Monitor remote function directly using SvelteKit's reactive system
 	const monitorRemote = $derived(fn(arg() as TArg));
@@ -121,9 +122,9 @@ export function remoteFunctionCache<TArg, TReturn>(
 				debugLog('State updated to:', state.current);
 				error = undefined;
 			} catch (err) {
-				error = err;
+				error = err instanceof Error ? err : new Error(String(err));
 			} finally {
-				updateTime = new Date();
+				updateTime = $state(new SvelteDate());
 				refreshingInternal = false;
 				loadingInternal = false;
 			}
@@ -174,7 +175,7 @@ export function remoteFunctionCache<TArg, TReturn>(
 
 				// Update our cache with the fresh data from SvelteKit
 				state.current = currentRemoteValue;
-				updateTime = new Date();
+				updateTime = $state(new SvelteDate());
 				error = undefined;
 
 				debugLog('Auto-sync: Cache updated successfully');
@@ -206,7 +207,7 @@ export function remoteFunctionCache<TArg, TReturn>(
 		refresh: () => refresh(true),
 		setValue: (val: TReturn) => {
 			state.current = val;
-			updateTime = new Date();
+			updateTime = new SvelteDate();
 		},
 		destroy: () => {
 			debugLog('Destroying remoteFunctionCache instance');

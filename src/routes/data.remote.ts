@@ -1,4 +1,4 @@
-import { query, command, form } from '$app/server';
+import { query, form } from '$app/server';
 import * as v from 'valibot';
 
 // Simulated database for demo purposes

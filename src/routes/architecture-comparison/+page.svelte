@@ -102,7 +102,7 @@
 			</div>
 		{:else if searchCache.value?.current}
 			<div class="grid">
-				{#each searchCache.value.current as post}
+				{#each searchCache.value.current as post (post.id)}
 					<div class="card">
 						<h4>{post.title}</h4>
 						<p class="text-sm">{post.content}</p>

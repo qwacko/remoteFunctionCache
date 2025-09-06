@@ -200,7 +200,7 @@ export class IndexedDBStorageProvider<T> implements StorageProvider<T> {
 		};
 	}
 
-	private isStoredData(data: any): data is StoredData<T> {
+	private isStoredData(data: unknown): data is StoredData<T> {
 		return (
 			data &&
 			typeof data === 'object' &&

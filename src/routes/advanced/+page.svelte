@@ -1,5 +1,4 @@
 <script>
-	import { json } from '@sveltejs/kit';
 	import { remoteFunctionCache } from '../../lib/index.js';
 	import { searchPosts, getUsers } from '../data.remote.js';
 
@@ -98,7 +97,7 @@
 			</div>
 		{:else if searchCache.value?.current}
 			<div class="grid">
-				{#each searchCache.value.current as post}
+				{#each searchCache.value.current as post (post.id)}
 					<div class="card">
 						<h4>{post.title}</h4>
 						<p class="text-sm">{post.content}</p>
@@ -198,7 +197,7 @@
 
 			{#if usersCacheInstance1.value?.current}
 				<ul class="text-sm">
-					{#each usersCacheInstance1.value.current as user}
+					{#each usersCacheInstance1.value.current as user (user.id)}
 						<li>{user.name} - {user.email}</li>
 					{/each}
 				</ul>
@@ -219,7 +218,7 @@
 
 			{#if usersCacheInstance2.value?.current}
 				<ul class="text-sm">
-					{#each usersCacheInstance2.value.current as user}
+					{#each usersCacheInstance2.value.current as user (user.id)}
 						<li>{user.name} - {user.email}</li>
 					{/each}
 				</ul>

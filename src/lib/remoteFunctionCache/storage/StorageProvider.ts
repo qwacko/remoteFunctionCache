@@ -44,6 +44,6 @@ export interface StoredData<T> {
 
 export interface StorageOptions {
 	timeoutMinutes?: number | null;
-	serialize?: (value: any) => string;
-	deserialize?: (value: string) => any;
+	serialize?: (value: unknown) => string;
+	deserialize?: (value: string) => unknown;
 }

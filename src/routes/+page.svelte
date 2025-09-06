@@ -126,7 +126,7 @@
 		</div>
 	{:else if postsCache.value?.current}
 		<div class="grid">
-			{#each postsCache.value.current as post}
+			{#each postsCache.value.current as post (post.id)}
 				<div class="card">
 					<h4>{post.title}</h4>
 					<div class="flex justify-between items-center">

@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { remoteFunctionCache } from '../../lib/index.js';
-	import { getCurrentTime, getRandomNumber } from '../data.remote.js';
+	import { getCurrentTime } from '../data.remote.js';
 	import { onMount } from 'svelte';
 
 	let requestCount = $state(0);
@@ -73,7 +73,7 @@
 			// First, populate some caches with data by calling refresh() on a subset
 			const selectedCaches = loadTestCaches.slice(0, size);
 			await Promise.all(
-				selectedCaches.map((cache) => {
+				selectedCaches.map(() => {
 					// Populate cache by triggering initial load
 					return new Promise((resolve) => {
 						// Give it a moment to load
@@ -93,7 +93,8 @@
 			const cachedStart = performance.now();
 
 			// Access cached values (should be instantaneous)
-			const cachedValues = selectedCaches.map((cache) => {
+			// Access cached values to simulate read operation
+			selectedCaches.map((cache) => {
 				// This simulates accessing cached data
 				return cache.value?.current || 'no-cache';
 			});
@@ -121,14 +122,14 @@
 	const getStorageUsage = () => {
 		let localStorageSize = 0;
 		for (let key in localStorage) {
-			if (localStorage.hasOwnProperty(key)) {
+			if (Object.prototype.hasOwnProperty.call(localStorage, key)) {
 				localStorageSize += localStorage[key].length;
 			}
 		}
 
 		let sessionStorageSize = 0;
 		for (let key in sessionStorage) {
-			if (sessionStorage.hasOwnProperty(key)) {
+			if (Object.prototype.hasOwnProperty.call(sessionStorage, key)) {
 				sessionStorageSize += sessionStorage[key].length;
 			}
 		}

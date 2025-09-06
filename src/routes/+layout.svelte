@@ -1,18 +1,30 @@
 <script>
+	import { resolve } from '$app/paths';
 	import { page } from '$app/stores';
 </script>
 
 <nav>
 	<h1>Remote Function Cache Demo</h1>
 	<ul>
-		<li><a href="/" class:active={$page.route.id === '/'}>Basic Usage</a></li>
-		<li><a href="/advanced" class:active={$page.route.id === '/advanced'}>Advanced Features</a></li>
 		<li>
-			<a href="/storage-comparison" class:active={$page.route.id === '/storage-comparison'}
-				>Storage Comparison</a
+			<a href={resolve('/')} class:active={$page.route.id === '/'}>Basic Usage</a>
+		</li>
+		<li>
+			<a href={resolve('/advanced')} class:active={$page.route.id === '/advanced'}
+				>Advanced Features</a
 			>
 		</li>
-		<li><a href="/performance" class:active={$page.route.id === '/performance'}>Performance</a></li>
+		<li>
+			<a
+				href={resolve('/storage-comparison')}
+				class:active={$page.route.id === '/storage-comparison'}>Storage Comparison</a
+			>
+		</li>
+		<li>
+			<a href={resolve('/performance')} class:active={$page.route.id === '/performance'}
+				>Performance</a
+			>
+		</li>
 	</ul>
 </nav>
 

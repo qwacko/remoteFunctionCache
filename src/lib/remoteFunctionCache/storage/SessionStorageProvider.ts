@@ -57,7 +57,7 @@ export class SessionStorageProvider<T> implements StorageProvider<T> {
 	}
 
 	// SessionStorage doesn't support cross-tab synchronization
-	setupSync(key: string, callback: (value: T | null) => void): () => void {
+	setupSync(): () => void {
 		return () => {}; // No-op cleanup function
 	}
 
@@ -68,7 +68,7 @@ export class SessionStorageProvider<T> implements StorageProvider<T> {
 		};
 	}
 
-	private isStoredData(data: any): data is StoredData<T> {
+	private isStoredData(data: unknown): data is StoredData<T> {
 		return (
 			data &&
 			typeof data === 'object' &&

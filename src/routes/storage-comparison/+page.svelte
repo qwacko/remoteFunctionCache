@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { remoteFunctionCache } from '../../lib/index.js';
-	import { getUsers, getCurrentTime } from '../data.remote.js';
+	import { getUsers } from '../data.remote.js';
 	import { onMount } from 'svelte';
 
 	let performanceData = $state<
@@ -31,11 +31,12 @@
 	});
 
 	// Cache for large data test
-	const largeDataCache = remoteFunctionCache(getCurrentTime, () => undefined, {
-		key: 'large-data-test',
-		storage: 'indexeddb',
-		timeoutMinutes: null
-	});
+	// Large data cache for testing (currently not used in UI)
+	// const largeDataCache = remoteFunctionCache(getCurrentTime, () => undefined, {
+	// 	key: 'large-data-test',
+	// 	storage: 'indexeddb',
+	// 	timeoutMinutes: null
+	// });
 
 	const runPerformanceTest = async () => {
 		isRunningTest = true;
@@ -64,7 +65,9 @@
 			// Read test (measure cache access time)
 			const readStart = performance.now();
 			// Simply access the existing cache data instead of creating a new cache
+			// Read cached data for performance measurement
 			const cachedData = test.cache.value?.current;
+			console.log('Cache read for', test.name, ':', !!cachedData);
 			await new Promise((resolve) => setTimeout(resolve, 10)); // Minimal delay to simulate cache access
 			const readEnd = performance.now();
 
@@ -172,7 +175,7 @@
 				</div>
 
 				<ul class="text-xs">
-					{#each localStorageCache.value.current.slice(0, 3) as user}
+					{#each localStorageCache.value.current.slice(0, 3) as user (user.id)}
 						<li>{user.name}</li>
 					{/each}
 					{#if localStorageCache.value.current.length > 3}
@@ -206,7 +209,7 @@
 				</div>
 
 				<ul class="text-xs">
-					{#each sessionStorageCache.value.current.slice(0, 3) as user}
+					{#each sessionStorageCache.value.current.slice(0, 3) as user (user.id)}
 						<li>{user.name}</li>
 					{/each}
 					{#if sessionStorageCache.value.current.length > 3}
@@ -242,7 +245,7 @@
 				</div>
 
 				<ul class="text-xs">
-					{#each indexedDBCache.value.current.slice(0, 3) as user}
+					{#each indexedDBCache.value.current.slice(0, 3) as user (user.id)}
 						<li>{user.name}</li>
 					{/each}
 					{#if indexedDBCache.value.current.length > 3}
@@ -283,7 +286,7 @@
 					</tr>
 				</thead>
 				<tbody>
-					{#each performanceData as result}
+					{#each performanceData as result (result.storage)}
 						<tr style="border-bottom: 1px solid #f1f5f9;">
 							<td style="padding: 0.5rem; font-weight: 500;">{result.storage}</td>
 							<td style="padding: 0.5rem;">{result.writeTime}</td>
