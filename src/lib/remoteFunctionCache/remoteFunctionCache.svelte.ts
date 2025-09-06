@@ -50,17 +50,17 @@ export function remoteFunctionCache<TArg, TReturn>(
 	let updateTime = $state<Date>(new Date());
 	let prevArgToKey = $state<string | undefined>(null as any);
 
-	// Create a reactive remote function query to monitor for SvelteKit auto-invalidation
-	let remoteQuery = $derived(() => {
-		const currentArgs = arg();
-		return currentArgs === undefined ? fn() : fn(currentArgs);
-	});
-
-	// Track the remote function's result to detect when SvelteKit refreshes it
-	let lastRemoteResult = $state<TReturn | undefined>(undefined);
+	// Monitor remote function directly using SvelteKit's reactive system
+	const monitorRemote = $derived(fn(arg() as TArg));
+	const monitorRemoteValue = $derived(monitorRemote.current);
 
 	const refresh = (callFunction: boolean = false) => {
 		const latestArgs = arg();
+
+		console.log(
+			`[${functionKey}] refresh() called with callFunction=${callFunction}, args:`,
+			latestArgs
+		);
 
 		refreshingInternal = true;
 		// Clear any previous error at the start of a new request
@@ -72,7 +72,7 @@ export function remoteFunctionCache<TArg, TReturn>(
 			try {
 				// If using async storage (IndexedDB), wait for loading to complete
 				if (state.isLoading) {
-					await new Promise<void>(resolve => {
+					await new Promise<void>((resolve) => {
 						const checkLoading = () => {
 							if (!state.isLoading) {
 								resolve();
@@ -98,14 +98,19 @@ export function remoteFunctionCache<TArg, TReturn>(
 
 				let result;
 				if (callFunction) {
+					console.log(`[${functionKey}] Calling function with forced refresh`);
 					// Force refresh the remote function cache first
 					const queryPromise = latestArgs === undefined ? fn() : fn(latestArgs);
 					await queryPromise.refresh();
 					result = await queryPromise;
 				} else {
-					result = latestArgs === undefined ? await fn() : await fn(latestArgs);
+					console.log(`[${functionKey}] Calling function normally`);
+					const queryPromise = latestArgs === undefined ? fn() : fn(latestArgs);
+					result = await queryPromise;
 				}
+				console.log(`[${functionKey}] Function result:`, result);
 				state.current = result;
+				console.log(`[${functionKey}] State updated to:`, state.current);
 				error = undefined;
 			} catch (err) {
 				error = err;
@@ -132,36 +137,37 @@ export function remoteFunctionCache<TArg, TReturn>(
 		});
 	});
 
-	// Monitor the remote function for SvelteKit auto-invalidation
+	// Auto-sync: Monitor remote function for SvelteKit invalidation changes
 	$effect(() => {
-		if (!autoSync) return;
-		
-		const query = remoteQuery;
-		if (query) {
-			// Use untrack to avoid infinite loops while still monitoring the promise
-			untrack(async () => {
-				try {
-					const result = await query;
-					
-					// Only update if the result has actually changed
-					if (JSON.stringify(result) !== JSON.stringify(lastRemoteResult)) {
-						lastRemoteResult = result;
-						
-						// Update our cache with the fresh data from SvelteKit
-						state.current = result;
-						updateTime = new Date();
-						error = undefined;
-						
-						// Clear loading states since we got fresh data
-						loadingInternal = false;
-						refreshingInternal = false;
-					}
-				} catch (err) {
-					// Don't override cache on remote function errors
-					// The cache might still have valid data
-					console.debug('Remote function auto-sync error (cache preserved):', err);
-				}
-			});
+		if (!autoSync) {
+			console.log(`[${functionKey}] Auto-sync disabled`);
+			return;
+		}
+
+		// This reactive effect will trigger whenever SvelteKit invalidates the remote function
+		const currentRemoteValue = monitorRemoteValue;
+		console.log(`[${functionKey}] Remote function value changed:`, currentRemoteValue);
+
+		// Only update cache if we have a value and it's different from our current cache
+		if (currentRemoteValue !== undefined) {
+			const currentCacheValue = state.current;
+			const remoteValueString = JSON.stringify(currentRemoteValue);
+			const cacheValueString = JSON.stringify(currentCacheValue);
+
+			if (remoteValueString !== cacheValueString) {
+				console.log(`[${functionKey}] Auto-sync: Updating cache with fresh data from SvelteKit`);
+				console.log(`[${functionKey}] Cached:`, currentCacheValue);
+				console.log(`[${functionKey}] Remote:`, currentRemoteValue);
+
+				// Update our cache with the fresh data from SvelteKit
+				state.current = currentRemoteValue;
+				updateTime = new Date();
+				error = undefined;
+
+				console.log(`[${functionKey}] Auto-sync: Cache updated successfully`);
+			} else {
+				console.log(`[${functionKey}] Auto-sync: Remote value same as cache, no update needed`);
+			}
 		}
 	});
 
