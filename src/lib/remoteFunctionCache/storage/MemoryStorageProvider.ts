@@ -1,7 +1,7 @@
 import type { StorageProvider, StoredData, StorageOptions } from './StorageProvider.js';
 
 // In-memory storage for testing and scenarios where persistence isn't needed
-const memoryStorage = new Map<string, any>();
+const memoryStorage = new Map<string, string>();
 
 export class MemoryStorageProvider<T> implements StorageProvider<T> {
 	private options: StorageOptions;
@@ -57,7 +57,8 @@ export class MemoryStorageProvider<T> implements StorageProvider<T> {
 	}
 
 	// Memory storage doesn't support cross-tab sync (different process memory)
-	setupSync?(key: string, callback: (value: T | null) => void): () => void {
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars
+	setupSync?(_key: string, _callback: (value: T | null) => void): () => void {
 		// Return empty cleanup function
 		return () => {};
 	}

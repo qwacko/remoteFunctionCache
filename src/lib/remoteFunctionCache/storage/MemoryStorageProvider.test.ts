@@ -179,7 +179,7 @@ describe('MemoryStorageProvider', () => {
 
 		it('should handle null and undefined values', async () => {
 			const nullProvider = new MemoryStorageProvider<string | null>();
-			
+
 			await nullProvider.set('null-key', null);
 			const nullResult = await nullProvider.get('null-key');
 			expect(nullResult).toBeNull();

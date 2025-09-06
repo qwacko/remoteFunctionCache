@@ -5,7 +5,7 @@ A powerful caching library for SvelteKit's remote functions that provides intell
 ## Features
 
 - 🚀 **Intelligent Caching**: Automatically caches remote function results
-- 💾 **Multiple Storage Options**: localStorage, sessionStorage, and IndexedDB support
+- 💾 **Multiple Storage Options**: localStorage, sessionStorage, IndexedDB, and memory support
 - ⏰ **Automatic Expiration**: Configurable timeout with automatic cleanup
 - 🔄 **Cross-tab Synchronization**: Share cache updates across browser tabs
 - 📱 **Reactive Arguments**: Automatically handles reactive argument changes
@@ -92,7 +92,7 @@ Creates a cached version of a remote function.
 ```typescript
 {
 	key?: string;              // Cache key (defaults to function name)
-	storage?: 'local' | 'session' | 'indexeddb';  // Storage type
+	storage?: 'local' | 'session' | 'indexeddb' | 'memory';  // Storage type
 	syncTabs?: boolean;        // Enable cross-tab synchronization
 	timeoutMinutes?: number | null;  // Cache expiration (null = no expiry)
 	initialValue?: TReturn;    // Initial value before first load
@@ -188,6 +188,20 @@ Creates a cached version of a remote function.
 </script>
 ```
 
+### Memory for Testing and Temporary Data
+
+```svelte
+<script>
+	const tempCache = remoteFunctionCache(getTestData, () => undefined, {
+		key: 'temporary-data',
+		storage: 'memory',
+		syncTabs: false, // Memory storage doesn't support cross-tab sync
+		timeoutMinutes: null, // No expiry (lost on page reload anyway)
+		autoSync: true
+	});
+</script>
+```
+
 ### Manual Cache Management
 
 ```svelte
@@ -235,6 +249,15 @@ Creates a cached version of a remote function.
 - ✅ Asynchronous API (non-blocking)
 - ✅ Rich data type support
 
+### Memory
+
+- ⚠️ Lost on page reload
+- ❌ No cross-tab synchronization
+- ✅ No storage limit (RAM-based)
+- ✅ Fastest access (synchronous)
+- ✅ Rich data types (native JavaScript objects)
+- 🔧 Ideal for testing and temporary data
+
 ## Performance Benefits
 
 The cache provides significant performance improvements:
@@ -278,7 +301,7 @@ The library includes comprehensive demo pages:
 
 - **Basic Usage** (`/`): Core functionality and basic examples
 - **Advanced Features** (`/advanced`): Cross-tab sync, multiple instances, search
-- **Storage Comparison** (`/storage-comparison`): Compare different storage backends
+- **Storage Comparison** (`/storage-comparison`): Compare all storage backends (localStorage, sessionStorage, IndexedDB, Memory)
 - **Performance Analysis** (`/performance`): Load testing and performance metrics
 
 ## Browser Support
