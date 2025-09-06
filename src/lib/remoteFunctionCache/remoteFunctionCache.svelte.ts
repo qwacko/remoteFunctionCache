@@ -124,7 +124,7 @@ export function remoteFunctionCache<TArg, TReturn>(
 			} catch (err) {
 				error = err instanceof Error ? err : new Error(String(err));
 			} finally {
-				updateTime = $state(new SvelteDate());
+				updateTime = new SvelteDate();
 				refreshingInternal = false;
 				loadingInternal = false;
 			}
@@ -175,7 +175,7 @@ export function remoteFunctionCache<TArg, TReturn>(
 
 				// Update our cache with the fresh data from SvelteKit
 				state.current = currentRemoteValue;
-				updateTime = $state(new SvelteDate());
+				updateTime = new SvelteDate();
 				error = undefined;
 
 				debugLog('Auto-sync: Cache updated successfully');
