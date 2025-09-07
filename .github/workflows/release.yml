@@ -7,11 +7,11 @@ on:
 jobs:
   publish:
     runs-on: ubuntu-latest
-    
+
     permissions:
       contents: read
       id-token: write # Required for provenance
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -19,36 +19,40 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          cache: 'npm'
+          node-version: 24
           registry-url: 'https://registry.npmjs.org'
 
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
       - name: Install dependencies
-        run: npm ci
+        run: pnpm install --frozen-lockfile
 
       - name: TypeScript check
-        run: npm run check
+        run: pnpm run check
 
       - name: Lint code
-        run: npm run lint
+        run: pnpm run lint
 
       - name: Run tests
-        run: npm run test
+        run: pnpm run test
 
       - name: Build package
-        run: npm run build
+        run: pnpm run build
 
       - name: Verify package integrity
-        run: npm run prepack
+        run: pnpm run prepack
 
       - name: Update package version
         run: |
           # Extract version from GitHub release tag (remove 'v' prefix if present)
           VERSION=${GITHUB_REF_NAME#v}
-          npm version --no-git-tag-version $VERSION
+          pnpm version --no-git-tag-version $VERSION
 
       - name: Publish to NPM
-        run: npm publish --provenance --access public
+        run: pnpm publish --provenance --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
@@ -62,5 +66,5 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Install Command" >> $GITHUB_STEP_SUMMARY
           echo "\`\`\`bash" >> $GITHUB_STEP_SUMMARY
-          echo "npm install remotefunctioncache" >> $GITHUB_STEP_SUMMARY
+          echo "pnpm add remotefunctioncache" >> $GITHUB_STEP_SUMMARY
           echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
