@@ -267,41 +267,25 @@ Creates a cached version of a remote function.
 - ✅ Rich data types (native JavaScript objects)
 - 🔧 Ideal for testing and temporary data
 
-## Performance Benefits
-
-The cache provides significant performance improvements:
-
-- **Network Request**: ~500ms average
-- **Cache Hit**: ~0.1ms average
-- **Improvement**: 99.98% faster for cached data
-
-Load testing shows exponential performance gains with concurrent requests:
-
-| Concurrent Requests | Uncached | Cached | Improvement |
-| ------------------- | -------- | ------ | ----------- |
-| 10                  | 2.1s     | 0.3s   | 85% faster  |
-| 50                  | 8.5s     | 0.8s   | 90% faster  |
-| 100                 | 15.2s    | 1.2s   | 92% faster  |
-
 ## Development
 
 To run the demo and develop the library:
 
 ```bash
 # Install dependencies
-npm install
+pnpm install
 
 # Start development server
-npm run dev
+pnpm dev
 
 # Build the library
-npm run build
+pnpm build
 
 # Run tests
-npm test
+pnpm test
 
 # Package for distribution
-npm pack
+pnpm pack
 ```
 
 ## Demo Pages
