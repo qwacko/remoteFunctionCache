@@ -47,9 +47,15 @@ jobs:
 
       - name: Update package version
         run: |
-          # Extract version from GitHub release tag (remove 'v' prefix if present)
           VERSION=${GITHUB_REF_NAME#v}
-          pnpm version --no-git-tag-version $VERSION
+          CURRENT_VERSION=$(node -p "require('./package.json').version")
+      
+          if [ "$VERSION" != "$CURRENT_VERSION" ]; then
+            echo "Updating package.json version from $CURRENT_VERSION → $VERSION"
+            pnpm version --no-git-tag-version $VERSION
+          else
+            echo "Package.json version ($CURRENT_VERSION) already matches release tag ($VERSION). Skipping."
+          fi
 
       - name: Publish to NPM
         run: pnpm publish --provenance --access public
