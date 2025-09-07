@@ -1,7 +1,11 @@
 {
 	"name": "remotefunctioncache",
 	"version": "0.1.0",
-	"license": "MIT",
+	"license": "MIT",	
+	"repository": {
+	   "type": "git",
+	   "url": "https://github.com/qwacko/remoteFunctionCache.git"
+	},
 	"scripts": {
 		"dev": "vite dev",
 		"build": "vite build && npm run prepack",
