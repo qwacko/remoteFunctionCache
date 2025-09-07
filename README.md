@@ -17,8 +17,17 @@ A powerful caching library for SvelteKit's remote functions that provides intell
 
 ## Installation
 
+Install with your preferred package manager:
+
 ```bash
+# npm
 npm install remotefunctioncache
+
+# pnpm
+pnpm add remotefunctioncache
+
+# yarn
+yarn add remotefunctioncache
 ```
 
 ## Prerequisites
